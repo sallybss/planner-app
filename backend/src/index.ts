@@ -1,3 +1,7 @@
-// import { startServer } from './app';
+import { startServer } from "./app";
 
-// startServer();
+try {
+  startServer();
+} catch (error) {
+  console.error("Failed to start server:", error);
+}

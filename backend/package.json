@@ -1,49 +1,64 @@
 {
-  "name": "backend",
+  "name": "planner-events-api",
   "version": "1.0.0",
-  "description": "mongodb express ts rest api for planner app",
-  "keywords": [
-    "planner",
-    "api",
-    "development",
-    "environments"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "(https://github.com/sallybss/planner-app.git)"
+  "description": "MongoDB + Express + TypeScript REST API for planner events",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf ./dist && tsc",
+    "start": "node dist/index.js",
+    "start-dev": "npx nodemon",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "nodemonConfig": {
     "verbose": false,
     "watch": [
       "src"
     ],
-    "ext": "js,ts",
+    "ext": "ts",
     "exec": "npx ts-node ./src/index.ts",
     "ignore": [
-      "node_modules"
-    ]
+      "node_modules",
+      "dist",
+      ".git",
+      "**/.DS_Store",
+      "**/*.js",
+      "**/*.js.map"
+    ],
+    "delay": "300"
   },
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sallybss/planner-app.git"
+  },
   "author": "salibss",
+  "license": "ISC",
   "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "dev": "nodemon --watch src --exec ts-node src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+  "bugs": {
+    "url": "https://github.com/sallybss/planner-app/issues"
   },
+  "homepage": "https://github.com/sallybss/planner-app#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
     "cross-env": "^10.1.0",
     "dotenv-flow": "^4.1.0",
     "express": "^5.2.1",
     "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
-    "mongoose": "^9.3.0"
+    "mongoose": "^9.3.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/joi": "^17.2.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.4.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
