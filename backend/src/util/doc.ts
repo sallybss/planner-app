@@ -1,9 +1,12 @@
-import swaggerUi from "swagger-ui-express";
-import swaggerJSDoc from "swagger-jsdoc";
 import type { Application } from "express";
 import path from "path";
 
-export function setupDocs(app: Application) {
+export async function setupDocs(app: Application) {
+  const [{ default: swaggerUi }, { default: swaggerJSDoc }] = await Promise.all([
+    import("swagger-ui-express"),
+    import("swagger-jsdoc")
+  ]);
+
   const isProd = process.env.NODE_ENV === "production";
 
   const swaggerDefinition = {

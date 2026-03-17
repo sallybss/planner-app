@@ -7,6 +7,19 @@ import { userModel } from "../models/userModel";
 import { type User } from "../interfaces/user";
 import { connect, disconnect } from "../repository/database";
 
+export async function getAllUsers(_req: Request, res: Response) {
+  try {
+    await connect();
+
+    const users = await userModel.find({}, { password: 0 }).sort({ registerDate: -1 });
+    return res.status(200).json(users);
+  } catch (error) {
+    return res.status(500).send("Error retrieving users. Error: " + error);
+  } finally {
+    await disconnect();
+  }
+}
+
 export async function registerUser(req: Request, res: Response) {
   try {
     const { error } = validateUserRegistrationInfo(req.body);

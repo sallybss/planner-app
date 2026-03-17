@@ -31,13 +31,16 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/api", routes);
-setupDocs(app);
 
 export function startServer() {
   const PORT: number = parseInt(process.env.PORT as string) || 4000;
 
   app.listen(PORT, () => {
     console.log("Server is running on port: " + PORT);
+
+    void setupDocs(app).catch((error) => {
+      console.error("Failed to setup Swagger docs:", error);
+    });
   });
 }
 

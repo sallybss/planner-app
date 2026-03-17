@@ -25,6 +25,20 @@ router.get("/", (_req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /auth/users:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get all users
+ *     description: Returns all registered users without their passwords.
+ *     responses:
+ *       200:
+ *         description: List of users
+ *       500:
+ *         description: Server error
+ */
+
+/**
+ * @swagger
  * /auth/register:
  *   post:
  *     tags: [Auth]
@@ -47,6 +61,39 @@ router.get("/", (_req: Request, res: Response) => {
  *         description: Validation error
  */
 router.use("/auth", authRoutes);
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Log in
+ *     description: Authenticate an existing user and return a JWT token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *           example:
+ *             email: "sali@test.com"
+ *             password: "123456"
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Invalid credentials or validation error
+ *       500:
+ *         description: Missing token secret or server error
+ */
 
 /**
  * @swagger

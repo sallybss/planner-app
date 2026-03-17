@@ -6,25 +6,8 @@
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "start": "node dist/index.js",
-    "start-dev": "npx nodemon",
+    "start-dev": "nodemon --quiet --legacy-watch --watch src --ext ts,json --ignore node_modules --ignore dist --ignore .git --ignore '**/.DS_Store' --ignore '**/*.js' --ignore '**/*.js.map' --exec \"node -r ts-node/register/transpile-only ./src/index.ts\"",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "nodemonConfig": {
-    "verbose": false,
-    "watch": [
-      "src"
-    ],
-    "ext": "ts",
-    "exec": "npx ts-node ./src/index.ts",
-    "ignore": [
-      "node_modules",
-      "dist",
-      ".git",
-      "**/.DS_Store",
-      "**/*.js",
-      "**/*.js.map"
-    ],
-    "delay": "300"
   },
   "repository": {
     "type": "git",

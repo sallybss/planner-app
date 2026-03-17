@@ -2,11 +2,17 @@ import { Request, Response } from "express";
 import { eventModel } from "../models/eventModel";
 import { connect, disconnect } from "../repository/database";
 
+const queryableEventFields = new Set(["title", "description", "startTime", "endTime", "color", "category", "owner"]);
+
 function isValidDate(value: unknown): boolean {
   if (typeof value !== "string") return false;
 
   const date = new Date(value);
   return !Number.isNaN(date.getTime());
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function pickEventBody(body: any) {
@@ -84,14 +90,18 @@ export async function getEventById(req: Request, res: Response) {
 }
 
 export async function getEventsByQuery(req: Request, res: Response) {
-  const key = String(req.params.key);
-  const val = req.params.val;
+  const key = String(req.params.field ?? "");
+  const value = String(req.params.value ?? "");
 
   try {
+    if (!queryableEventFields.has(key)) {
+      return res.status(400).send("Invalid query field.");
+    }
+
     await connect();
 
     const result = await eventModel.find({
-      [key]: { $regex: val, $options: "i" }
+      [key]: new RegExp(escapeRegex(value), "i")
     } as any);
 
     res.status(200).send(result);
