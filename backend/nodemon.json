@@ -1,0 +1,14 @@
+{
+  "legacyWatch": true,
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": [
+    "node_modules",
+    "dist",
+    ".git",
+    "**/.DS_Store",
+    "**/*.js",
+    "**/*.js.map"
+  ],
+  "exec": "node --no-deprecation -r ts-node/register/transpile-only ./src/index.ts"
+}

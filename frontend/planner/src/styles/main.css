@@ -1,0 +1,966 @@
+:root {
+  color-scheme: light;
+  --bg: #ebe8e3;
+  --panel: #f8f6f1;
+  --panel-strong: #ffffff;
+  --sidebar: #111111;
+  --text: #171717;
+  --muted: #6d6a66;
+  --line: rgba(23, 23, 23, 0.08);
+  --shadow: 0 24px 60px rgba(16, 16, 16, 0.12);
+  --mint: #d6ede0;
+  --violet: #e4dafd;
+  --blue: #d9e7ff;
+  --sand: #f2eadc;
+  --peach: #ffd9bf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    "Satoshi",
+    "Avenir Next",
+    "Segoe UI",
+    sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 28%),
+    linear-gradient(135deg, #d7d3cc 0%, #efede8 45%, #ddd7cf 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.AuthPage {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  padding: 0;
+  gap: 0;
+  background:
+    radial-gradient(circle at top left, rgba(254, 248, 255, 0.85), transparent 24%),
+    linear-gradient(135deg, #131720 0%, #16131d 28%, #101015 100%);
+}
+
+.AuthHero {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  border-radius: 0;
+  overflow: hidden;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(240, 221, 255, 0.55), transparent 22%),
+    radial-gradient(circle at 50% 32%, rgba(161, 70, 255, 0.7), transparent 28%),
+    linear-gradient(180deg, #18112a 0%, #09090c 58%, #050507 100%);
+}
+
+.AuthHero__glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  opacity: 0.7;
+}
+
+.AuthHero__glow--top {
+  top: -60px;
+  left: -30px;
+  width: 240px;
+  height: 240px;
+  background: rgba(255, 236, 201, 0.3);
+}
+
+.AuthHero__glow--bottom {
+  right: -80px;
+  bottom: -70px;
+  width: 320px;
+  height: 320px;
+  background: rgba(108, 71, 255, 0.24);
+}
+
+.AuthHero__content {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  padding: 450px 0 0 56px;
+  color: #f7f8fb;
+}
+
+.AuthHero__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.AuthHero__brandLogo {
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.AuthHero__eyebrow,
+.DashboardHeader__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.AuthHero h1 {
+  margin: 16px 0 14px;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.AuthHero p {
+  margin: 0;
+  max-width: 430px;
+  color: rgba(247, 248, 251, 0.8);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.AuthHero__steps {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.AuthHero__steps li {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.AuthHero__steps li span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #121212;
+  font-weight: 600;
+}
+
+.AuthHero__steps p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.AuthPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: #000;
+}
+
+.AuthCard {
+  width: min(520px, 100%);
+  padding: 42px 40px;
+  color: #f5f5f5;
+}
+
+.AuthCard__kicker {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.AuthCard__header h2 {
+  margin: 10px 0 12px;
+  font-size: 40px;
+  line-height: 0.98;
+}
+
+.AuthCard__header p,
+.AuthCard__footer p,
+.Sidebar__brand span,
+.Sidebar__panel p,
+.DashboardHeader p,
+.CalendarTopbar__title span,
+.AccountMenu__email {
+  color: var(--muted);
+}
+
+.AuthCard__header p,
+.AuthCard__footer p {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.AuthCard__actions {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.AuthCard__social {
+  height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  color: #f7f7f7;
+  font-weight: 700;
+}
+
+.AuthCard__divider {
+  position: relative;
+  margin: 22px 0 4px;
+  text-align: center;
+}
+
+.AuthCard__divider::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.AuthCard__divider span {
+  position: relative;
+  padding: 0 14px;
+  background: #101014;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 13px;
+}
+
+.AuthForm {
+  margin-top: 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.AuthField {
+  display: grid;
+  gap: 10px;
+}
+
+.AuthField span {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.AuthField input {
+  width: 100%;
+  height: 56px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  color: #f8f8f8;
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.AuthField input::placeholder {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.AuthField input:focus {
+  border-color: rgba(190, 133, 255, 0.8);
+  box-shadow: 0 0 0 4px rgba(149, 96, 255, 0.12);
+}
+
+.AuthForm__error {
+  margin: 0;
+  color: #ff8f8f;
+}
+
+.AuthForm__submit,
+.AccountMenu__dropdown button,
+.Sidebar__link--active {
+  border: 0;
+  color: #fff;
+  background: #111;
+}
+
+.AuthForm__submit {
+  height: 56px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff, #e7d9ff);
+  color: #15121e;
+  margin-top: 20px;
+}
+
+.AuthCard__footer {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.AuthCard__footerLink {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.AuthCard__footerLink a {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 980px) {
+  .AuthPage {
+    grid-template-columns: 1fr;
+  }
+
+  .AuthHero {
+    min-height: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  .AuthPage {
+    gap: 0;
+  }
+
+  .AuthHero__content,
+  .AuthCard {
+    padding: 28px 22px;
+  }
+
+  .AuthPanel {
+    padding: 14px;
+  }
+
+  .AuthHero h1 {
+    font-size: 38px;
+  }
+
+  .AuthCard__actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.DashboardPage {
+  height: 100vh;
+  display: grid;
+  overflow: hidden;
+}
+
+.DashboardPage--calendar {
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 0;
+  background: #050507;
+}
+
+.CalendarSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 14px;
+  color: #f2f2f3;
+  background: linear-gradient(180deg, #0c0c0f 0%, #111116 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.CalendarSidebar__brand strong,
+.CalendarSidebar__summary strong,
+.CalendarDetails h2,
+.CalendarBoard__header strong {
+  display: block;
+  color: #fff;
+}
+
+.CalendarSidebar__brand span,
+.CalendarBoard__header span,
+.CalendarWorkspace__eyebrow,
+.CalendarDetails__eyebrow,
+.CalendarDetails__meta dt,
+.CalendarEvent span:last-child {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.CalendarSidebar__nav {
+  display: grid;
+  gap: 12px;
+}
+
+.CalendarSidebar__summary {
+  margin-top: auto;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.CalendarSidebar__summary span {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.CalendarSidebar__summary p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.6;
+}
+
+.CalendarSidebar__link {
+  width: 100%;
+  text-align: left;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.CalendarSidebar__link--active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.EventComposer__header span,
+.AuthField span {
+  font-weight: 700;
+}
+
+.EventComposer__header p,
+.EventComposer__field span,
+.CalendarWorkspace__userMeta,
+.CalendarBoard__message {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.EventComposer {
+  display: grid;
+  gap: 12px;
+}
+
+.EventComposer--panel {
+  padding: 18px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(14, 14, 18, 0.08);
+}
+
+.EventComposer--panel .EventComposer__header p,
+.EventComposer--panel .EventComposer__header span,
+.EventComposer--panel .EventComposer__field span {
+  color: #4f4f59;
+}
+
+.EventComposer__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.EventComposer__field {
+  display: grid;
+  gap: 8px;
+}
+
+.EventComposer__field input,
+.EventComposer__field select,
+.EventComposer__field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  outline: none;
+}
+
+.EventComposer__field input::placeholder,
+.EventComposer__field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.EventComposer__field textarea {
+  resize: none;
+}
+
+.EventComposer__field input:focus,
+.EventComposer__field select:focus,
+.EventComposer__field textarea:focus,
+.AuthForm__submit:focus,
+.EventComposer__submit:focus {
+  border-color: rgba(88, 100, 255, 0.45);
+  box-shadow: 0 0 0 4px rgba(88, 100, 255, 0.12);
+}
+
+.EventComposer__submit {
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  color: #15121e;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff, #daceff);
+}
+
+.CalendarWorkspace {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  overflow: hidden;
+  padding: 18px 18px 18px;
+  gap: 14px;
+  background:
+    radial-gradient(circle at top left, rgba(164, 113, 255, 0.18), transparent 20%),
+    linear-gradient(180deg, #0a0910 0%, #07070a 100%);
+}
+
+.CalendarWorkspace__topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.CalendarWorkspace__topbar h1 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: 30px;
+}
+
+.CalendarWorkspace__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.CalendarWorkspace__user,
+.CalendarWorkspace__logout {
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.CalendarWorkspace__user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 8px 0 16px;
+}
+
+.CalendarWorkspace__userAvatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  font-weight: 800;
+}
+
+.CalendarWorkspace__logout {
+  padding: 0 18px;
+  color: #fff;
+}
+
+.CalendarBoard {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  overflow: hidden;
+  gap: 12px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+}
+
+.CalendarBoard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.CalendarBoard__header span,
+.CalendarBoard__message {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.CalendarBoard__controls {
+  display: flex;
+  gap: 10px;
+}
+
+.CalendarBoard__controls button {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.CalendarBoard__message {
+  margin: 0;
+}
+
+.CalendarBoard__message--error,
+.AuthForm__error {
+  color: #ff9a9a;
+}
+
+.CalendarBoard__layout {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  align-items: stretch;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.CalendarGridShell {
+  position: relative;
+  height: min(760px, calc(100vh - 240px));
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 60px minmax(0, 1fr);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.CalendarHeaderShell,
+.CalendarBodyShell {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.CalendarHeaderShell {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.CalendarBodyShell {
+  height: 100%;
+  overflow: hidden;
+}
+
+.CalendarHeaderViewport {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.CalendarHeaderTrack {
+  width: max-content;
+  min-width: 100%;
+  display: grid;
+}
+
+.CalendarAxis {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: repeat(24, 44px);
+  background: #1a1a1f;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.CalendarAxis__corner {
+  height: 60px;
+  background: #1e1e24;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.CalendarAxis__time {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 11px;
+}
+
+.CalendarGridViewport {
+  height: 100%;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.CalendarGrid--week {
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: repeat(24, 44px);
+  gap: 0;
+}
+
+.CalendarGrid__slot {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.CalendarGrid__dayHeader {
+  display: grid;
+  place-items: center;
+  height: 60px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  color: #fff;
+  background: #1e1e24;
+}
+
+.CalendarGrid__dayHeader span {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.CalendarGrid__dayHeader strong {
+  font-size: 18px;
+}
+
+.CalendarEvent {
+  z-index: 1;
+  margin: 6px;
+  padding: 12px 12px 10px;
+  border-radius: 10px;
+  border-left: 3px solid color-mix(in srgb, var(--event-accent) 75%, #91a0ff 25%);
+  background: color-mix(in srgb, var(--event-accent) 24%, #1f2129 76%);
+  color: #f8f8fb;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+}
+
+.CalendarEvent--active {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.CalendarEvent strong {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.CalendarEvent span:last-child {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+}
+
+.CalendarNowLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.CalendarNowLine i {
+  display: block;
+  height: 1px;
+  background: rgba(255, 92, 92, 0.85);
+}
+
+.CalendarNowBadge {
+  position: absolute;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ff5f5f;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  z-index: 5;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.CalendarDetails {
+  padding: 0;
+  border-radius: 22px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  justify-items: stretch;
+  min-height: 0;
+  overflow: auto;
+}
+
+.CalendarDetails p,
+.CalendarDetails dd {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 14px;
+}
+
+.CalendarDetails strong,
+.CalendarDetails__meta dd,
+.CalendarDetails__description {
+  color: #fff;
+}
+
+.CalendarDetails h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.CalendarDetails--panel .CalendarDetails__section {
+  width: 100%;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.EventComposer--panel {
+  width: 100%;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.EventComposer--panel .EventComposer__header p,
+.EventComposer--panel .EventComposer__field span {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.EventComposer--panel .EventComposer__header span {
+  color: #fff;
+}
+
+.CalendarDetails__meta {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.CalendarDetails__meta div {
+  display: grid;
+  gap: 4px;
+}
+
+.CalendarDetails__meta dd {
+  margin: 0;
+  color: #fff;
+}
+
+.CalendarDetails__description {
+  line-height: 1.6;
+  color: #fff;
+}
+
+@media (max-width: 1100px) {
+  .AuthPage,
+  .DashboardPage {
+    grid-template-columns: 1fr;
+  }
+
+  .AuthHero {
+    min-height: 420px;
+  }
+
+  .DashboardPage--calendar {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .CalendarSidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .CalendarBoard__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .AuthPage,
+  .DashboardPage {
+    padding: 0;
+  }
+
+  .AuthHero__content,
+  .AuthCard,
+  .CalendarSidebar,
+  .CalendarWorkspace {
+    padding: 22px;
+  }
+
+  .CalendarWorkspace__topbar,
+  .CalendarBoard__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .EventComposer__row,
+  .CalendarWorkspace__actions {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .CalendarWorkspace__actions {
+    display: grid;
+  }
+
+  .CalendarGrid--week {
+    grid-template-columns: 60px repeat(7, minmax(140px, 1fr));
+  }
+}
