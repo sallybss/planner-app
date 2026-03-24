@@ -5,14 +5,12 @@ import {
   getAllEvents,
   getEventById,
   updateEventById,
-  deleteEventById,
-  getEventsByQuery
+  deleteEventById
 } from "../controllers/eventController";
 
 const router = Router();
 
 router.get("/", getAllEvents);
-router.get("/query/:field/:value", getEventsByQuery);
 router.get("/:id", getEventById);
 
 router.post("/", verifyToken, createEvent);

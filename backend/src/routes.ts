@@ -204,30 +204,4 @@ router.use("/events", eventRoutes);
  *         description: Event not found
  */
 
-/**
- * @swagger
- * /events/query/{field}/{value}:
- *   get:
- *     tags:
- *       - Events
- *     summary: Filter events
- *     description: Filter by a field/value pair.
- *     parameters:
- *       - in: path
- *         name: field
- *         required: true
- *         schema:
- *           type: string
- *         description: Field to filter by (title, category, owner, etc.)
- *       - in: path
- *         name: value
- *         required: true
- *         schema:
- *           type: string
- *         description: Value to match (case-insensitive).
- *     responses:
- *       200:
- *         description: Matching events
- */
-
 export default router;
