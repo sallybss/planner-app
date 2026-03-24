@@ -376,7 +376,7 @@ button {
 }
 
 .DashboardPage--calendar {
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 250px minmax(0, 1fr);
   gap: 0;
   background: #050507;
 }
@@ -391,12 +391,15 @@ button {
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.CalendarSidebar__brand strong,
-.CalendarSidebar__summary strong,
+.AuthHero__brand p,
+.CalendarSidebar__brand p,
+.CalendarSidebar__summary p:first-of-type,
 .CalendarDetails h2,
-.CalendarBoard__header strong {
+.CalendarBoard__title {
   display: block;
+  margin: 0;
   color: #fff;
+  font-weight: 700;
 }
 
 .CalendarSidebar__brand span,
@@ -411,6 +414,83 @@ button {
 .CalendarSidebar__nav {
   display: grid;
   gap: 12px;
+}
+
+.CalendarMini {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.CalendarMini__header p {
+  color: #fff;
+  font-size: 16px;
+  margin: 0;
+  text-align: center;
+}
+
+.CalendarMini__header {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.CalendarMini__nav {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+}
+
+.CalendarMini__weekdays,
+.CalendarMini__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.CalendarMini__weekdays span,
+.CalendarMini__day {
+  display: grid;
+  place-items: center;
+  min-height: 24px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.CalendarMini__weekdays span {
+  color: rgba(255, 255, 255, 0.36);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.CalendarMini__day {
+  color: rgba(255, 255, 255, 0.78);
+  background: transparent;
+}
+
+.CalendarMini__day--muted {
+  color: transparent;
+}
+
+.CalendarMini__day--today {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.CalendarMini__day--focused {
+  background: rgba(191, 180, 255, 0.24);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(220, 214, 255, 0.32);
 }
 
 .CalendarSidebar__summary {
@@ -470,20 +550,25 @@ button {
 .EventComposer--panel {
   padding: 18px;
   border-radius: 22px;
-  background: #fff;
-  border: 1px solid rgba(14, 14, 18, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .EventComposer--panel .EventComposer__header p,
 .EventComposer--panel .EventComposer__header span,
 .EventComposer--panel .EventComposer__field span {
-  color: #4f4f59;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.EventComposer--panel .EventComposer__header span {
+  color: #fff;
 }
 
 .EventComposer__row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
 }
 
 .EventComposer__field {
@@ -503,9 +588,25 @@ button {
   outline: none;
 }
 
+.EventComposer__field select {
+  min-height: 56px;
+  appearance: none;
+  padding-right: 52px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1.5 1.5 7 7 12.5 1.5' fill='none' stroke='rgba(255,255,255,0.82)' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 10px 9px;
+}
+
 .EventComposer__field input::placeholder,
 .EventComposer__field textarea::placeholder {
   color: rgba(255, 255, 255, 0.34);
+}
+
+.EventComposer__field input[type='date']::-webkit-calendar-picker-indicator,
+.EventComposer__field input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.82;
 }
 
 .EventComposer__field textarea {
@@ -521,15 +622,88 @@ button {
   box-shadow: 0 0 0 4px rgba(88, 100, 255, 0.12);
 }
 
+.EventComposer__field--color {
+  justify-content: center;
+}
+
+.EventComposer__colorLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-weight: 500 !important;
+}
+
 .EventComposer__submit {
   height: 52px;
   border: 0;
   border-radius: 999px;
   color: #15121e;
-  font-weight: 800;
+  font-weight: 700;
   background: linear-gradient(135deg, #ffffff, #daceff);
 }
 
+/* ── Color Picker Swatches ── */
+.ColorPicker {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+.ColorPicker__swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 2px solid transparent;
+  padding: 0;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ColorPicker__swatch:hover {
+  transform: scale(1.18);
+}
+
+.ColorPicker__swatch--active {
+  border-color: rgba(255, 255, 255, 0.85);
+  transform: scale(1.22);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4);
+}
+
+.ColorPicker__swatch--active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l3 3 5-5' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Swatch tooltip via title – native browser handles it.
+   For a custom tooltip, use this: */
+.ColorPicker__swatch[title]:hover::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(20, 20, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Calendar Workspace ── */
 .CalendarWorkspace {
   min-width: 0;
   display: grid;
@@ -619,6 +793,8 @@ button {
 
 .CalendarBoard__controls {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -629,6 +805,56 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
   background: rgba(255, 255, 255, 0.06);
+}
+
+.CalendarFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.CalendarFilter select,
+.CalendarFilter input,
+.CalendarFilter__clear {
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.CalendarFilter select,
+.CalendarFilter input {
+  outline: none;
+}
+
+.CalendarFilter select {
+  min-width: 110px;
+  padding: 0 34px 0 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.25 1.25 6 6l4.75-4.75' fill='none' stroke='rgba(255,255,255,0.72)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+}
+
+.CalendarFilter input {
+  width: 180px;
+  padding: 0 14px;
+}
+
+.CalendarFilter input::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.CalendarFilter__clear {
+  padding: 0 14px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .CalendarBoard__message {
@@ -644,7 +870,7 @@ button {
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px;
+  grid-template-columns: minmax(0, 1fr) 260px;
   align-items: stretch;
   gap: 12px;
   overflow: hidden;
@@ -663,21 +889,27 @@ button {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.CalendarHeaderShell,
-.CalendarBodyShell {
+/* Header shell: corner + scrollable day headers */
+.CalendarHeaderShell {
   min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
-}
-
-.CalendarHeaderShell {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Body shell: now just a single scrollable area — no separate axis column */
 .CalendarBodyShell {
+  min-width: 0;
+  min-height: 0;
   height: 100%;
   overflow: hidden;
+}
+
+.CalendarAxis__corner {
+  height: 60px;
+  background: #1e1e24;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .CalendarHeaderViewport {
@@ -691,18 +923,46 @@ button {
   display: grid;
 }
 
-.CalendarAxis {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-rows: repeat(24, 44px);
-  background: #1a1a1f;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+/* The single scrollable viewport — spans the full width now */
+.CalendarGridViewport {
+  height: 100%;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
-.CalendarAxis__corner {
-  height: 60px;
-  background: #1e1e24;
+/* Grid now includes the axis as first column (64px) + day columns */
+.CalendarGrid--week {
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+  display: grid;
+  /* gridTemplateColumns set via :style on the element — axis col prepended there */
+  grid-template-rows: repeat(23, 44px);
+  gap: 0;
+}
+
+.CalendarEventsLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Inline axis lives inside the scrolling grid, sticky to the left */
+.CalendarAxisInline {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: repeat(23, 44px);
+  grid-row: 1 / -1;
+  grid-column: 1;
+  width: 64px;
+  background: #1a1a1f;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -713,28 +973,6 @@ button {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.34);
   font-size: 11px;
-}
-
-.CalendarGridViewport {
-  height: 100%;
-  max-height: 100%;
-  min-width: 0;
-  min-height: 0;
-  overflow-x: auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
-}
-
-.CalendarGrid--week {
-  position: relative;
-  width: max-content;
-  min-width: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: repeat(24, 44px);
-  gap: 0;
 }
 
 .CalendarGrid__slot {
@@ -759,44 +997,54 @@ button {
   color: rgba(255, 255, 255, 0.48);
 }
 
-.CalendarGrid__dayHeader strong {
+.CalendarGrid__dayHeader p {
   font-size: 18px;
+  margin: 0;
 }
 
 .CalendarEvent {
+  position: absolute;
   z-index: 1;
-  margin: 6px;
-  padding: 12px 12px 10px;
-  border-radius: 10px;
-  border-left: 3px solid color-mix(in srgb, var(--event-accent) 75%, #91a0ff 25%);
-  background: color-mix(in srgb, var(--event-accent) 24%, #1f2129 76%);
+  padding: 10px 12px 9px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--event-accent) 28%, rgba(255, 255, 255, 0.18) 72%);
+  border-left: 3px solid color-mix(in srgb, var(--event-accent) 78%, #a7b4ff 22%);
+  background: color-mix(in srgb, var(--event-accent) 34%, #2a2d33 66%);
   color: #f8f8fb;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   cursor: pointer;
+  pointer-events: auto;
+  overflow: hidden;
 }
 
 .CalendarEvent--active {
   outline: 2px solid rgba(255, 255, 255, 0.35);
 }
 
-.CalendarEvent strong {
+.CalendarEvent__title {
   display: block;
-  margin: 0 0 4px;
-  font-size: 14px;
+  margin: 0 0 3px;
+  font-size: 13px;
   line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .CalendarEvent span:last-child {
   color: rgba(255, 255, 255, 0.58);
   font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .CalendarNowLine {
   position: absolute;
-  left: 0;
+  left: 64px;
   right: 0;
   height: 0;
-  z-index: 4;
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -837,6 +1085,8 @@ button {
   justify-items: stretch;
   min-height: 0;
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 .CalendarDetails p,
@@ -846,7 +1096,9 @@ button {
   font-size: 14px;
 }
 
-.CalendarDetails strong,
+.CalendarSidebar__brand p,
+.CalendarBoard__title,
+.CalendarSidebar__summary p:first-of-type,
 .CalendarDetails__meta dd,
 .CalendarDetails__description {
   color: #fff;
@@ -876,15 +1128,6 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.EventComposer--panel .EventComposer__header p,
-.EventComposer--panel .EventComposer__field span {
-  color: rgba(255, 255, 255, 0.66);
-}
-
-.EventComposer--panel .EventComposer__header span {
-  color: #fff;
-}
-
 .CalendarDetails__meta {
   display: grid;
   gap: 14px;
@@ -904,6 +1147,48 @@ button {
 .CalendarDetails__description {
   line-height: 1.6;
   color: #fff;
+}
+
+/* ── Edit / Delete Actions ── */
+.CalendarDetails__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.CalendarDetails__editBtn,
+.CalendarDetails__deleteBtn {
+  flex: 1;
+  height: 38px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.CalendarDetails__editBtn {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.CalendarDetails__editBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.CalendarDetails__editBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.CalendarDetails__deleteBtn {
+  border: 1px solid rgba(255, 80, 80, 0.25);
+  background: rgba(255, 80, 80, 0.1);
+  color: #ff8f8f;
+}
+
+.CalendarDetails__deleteBtn:hover {
+  background: rgba(255, 80, 80, 0.18);
 }
 
 @media (max-width: 1100px) {
@@ -928,6 +1213,10 @@ button {
 
   .CalendarBoard__layout {
     grid-template-columns: 1fr;
+  }
+
+  .CalendarMini {
+    max-width: 420px;
   }
 }
 

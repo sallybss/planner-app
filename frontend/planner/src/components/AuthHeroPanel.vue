@@ -15,7 +15,7 @@ const milestones = [
     <div class="AuthHero__content">
       <div class="AuthHero__brand">
         <img class="AuthHero__brandLogo" :src="logoWhite" alt="Planix logo" />
-        <strong>Planix</strong>
+        <p>Planix</p>
       </div>
       <h1>Plan the week with more clarity and less friction.</h1>
       <p>

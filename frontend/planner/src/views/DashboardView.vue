@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, reactive, ref, useTemplateRef } from 'vu
 import { useRouter } from 'vue-router'
 import { useAuth } from '../auth'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:4000/api'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api'
 const router = useRouter()
 const { user, initials, logout } = useAuth()
 const dayColumnWidth = 150
@@ -15,6 +15,7 @@ const lastVisibleHour = 23
 const headerViewport = useTemplateRef<HTMLDivElement>('headerViewport')
 const bodyViewport = useTemplateRef<HTMLDivElement>('bodyViewport')
 const bodyScrollTop = ref(0)
+const bodyScrollLeft = ref(0)
 
 type CalendarEvent = {
   _id?: string
@@ -34,6 +35,7 @@ const selectedEventId = ref<string | null>(null)
 const isLoading = ref(false)
 const isSaving = ref(false)
 const pageError = ref('')
+const isEditing = ref(false)
 
 const eventForm = reactive({
   title: '',
@@ -45,14 +47,42 @@ const eventForm = reactive({
   color: '#cfdcff',
 })
 
-const weekOffset = ref(0)
+const editForm = reactive({
+  title: '',
+  description: '',
+  date: '',
+  startTime: '09:00',
+  endTime: '10:00',
+  category: 'Work',
+  color: '#cfdcff',
+})
+const filters = reactive({
+  field: 'title',
+  value: '',
+})
+
 const timeSlots = Array.from(
   { length: lastVisibleHour - firstVisibleHour + 1 },
   (_, index) => firstVisibleHour + index,
 )
 
 const categoryOptions = ['Work', 'Meeting', 'Personal', 'Study', 'Health']
-const colorOptions = ['#cfdcff', '#d9efe4', '#f8e2c4', '#eadbff', '#ffd6cf']
+const colorOptions = [
+  { label: 'Blue', value: '#cfdcff' },
+  { label: 'Mint', value: '#d9efe4' },
+  { label: 'Sand', value: '#f8e2c4' },
+  { label: 'Lavender', value: '#eadbff' },
+  { label: 'Peach', value: '#ffd6cf' },
+  { label: 'Rose', value: '#f2c7dc' },
+]
+const filterOptions = [
+  { label: 'Title', value: 'title' },
+  { label: 'Category', value: 'category' },
+  { label: 'Description', value: 'description' },
+  { label: 'Start time', value: 'startTime' },
+  { label: 'End time', value: 'endTime' },
+  { label: 'Color', value: 'color' },
+] as const
 
 function parseTimeParts(value: string) {
   const [rawHour = '9', rawMinute = '0'] = value.split(':')
@@ -62,13 +92,9 @@ function parseTimeParts(value: string) {
   }
 }
 
-function startOfWeek(date: Date) {
-  const copy = new Date(date)
-  const day = copy.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  copy.setDate(copy.getDate() + diff)
-  copy.setHours(0, 0, 0, 0)
-  return copy
+function getMinutesFromTime(value: string) {
+  const { hour, minute } = parseTimeParts(value)
+  return hour * 60 + minute
 }
 
 function addDays(date: Date, amount: number) {
@@ -77,32 +103,119 @@ function addDays(date: Date, amount: number) {
   return copy
 }
 
+function endOfYear(date: Date) {
+  return new Date(date.getFullYear(), 11, 31)
+}
+
 function toInputDate(date: Date) {
   return date.toISOString().slice(0, 10)
 }
 
-const currentWeekStart = computed(() => addDays(startOfWeek(new Date()), weekOffset.value * 7))
+const currentYear = new Date().getFullYear()
+const yearStart = new Date(currentYear, 0, 1)
+const yearEnd = endOfYear(yearStart)
+const totalYearDays = Math.round((yearEnd.getTime() - yearStart.getTime()) / 86400000) + 1
 
 const visibleDays = computed(() =>
-  Array.from({ length: 21 }, (_, index) => {
-    const date = addDays(currentWeekStart.value, index)
-
+  Array.from({ length: totalYearDays }, (_, index) => {
+    const date = addDays(yearStart, index)
     return {
       key: toInputDate(date),
       short: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      monthShort: date.toLocaleDateString('en-US', { month: 'short' }),
       date,
       label: date.toLocaleDateString('en-US', { day: '2-digit' }),
+      monthLabel: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     }
   }),
 )
 
+const focusedDayIndex = computed(() => {
+  const viewport = bodyViewport.value
+  if (!viewport) {
+    const todayKey = toInputDate(new Date())
+    return Math.max(visibleDays.value.findIndex((day) => day.key === todayKey), 0)
+  }
+
+  const centerOffset = bodyScrollLeft.value + viewport.clientWidth / 2 - timeColumnWidth
+  return Math.min(
+    visibleDays.value.length - 1,
+    Math.max(0, Math.floor(centerOffset / dayColumnWidth)),
+  )
+})
+
 const currentMonthLabel = computed(() =>
-  currentWeekStart.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+  visibleDays.value[focusedDayIndex.value]?.monthLabel ?? new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
 )
 
+const sidebarMonthDate = computed(() => visibleDays.value[focusedDayIndex.value]?.date ?? new Date())
+const sidebarMonthLabel = computed(() =>
+  sidebarMonthDate.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+)
+
+async function scrollToMonth(targetDate: Date) {
+  await nextTick()
+  const viewport = bodyViewport.value
+  const targetMonth = targetDate.getMonth()
+  const targetYear = targetDate.getFullYear()
+  const targetIndex = visibleDays.value.findIndex(
+    (day) => day.date.getFullYear() === targetYear && day.date.getMonth() === targetMonth && day.date.getDate() === 1,
+  )
+
+  if (!viewport || targetIndex === -1) return
+
+  viewport.scrollLeft = Math.max(0, targetIndex * dayColumnWidth - dayColumnWidth)
+  handleBodyScroll()
+}
+
+function goToPreviousMonth() {
+  const current = sidebarMonthDate.value
+  void scrollToMonth(new Date(current.getFullYear(), current.getMonth() - 1, 1))
+}
+
+function goToNextMonth() {
+  const current = sidebarMonthDate.value
+  void scrollToMonth(new Date(current.getFullYear(), current.getMonth() + 1, 1))
+}
+
+const sidebarMonthDays = computed(() => {
+  const monthDate = sidebarMonthDate.value
+  const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
+  const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
+  const leading = (start.getDay() + 6) % 7
+  const total = leading + end.getDate()
+  const cells = Math.ceil(total / 7) * 7
+  const todayKey = toInputDate(new Date())
+  const focusedKey = visibleDays.value[focusedDayIndex.value]?.key
+
+  return Array.from({ length: cells }, (_, index) => {
+    const dayNumber = index - leading + 1
+    if (dayNumber < 1 || dayNumber > end.getDate()) {
+      return {
+        key: `empty-${index}`,
+        label: '',
+        isCurrentMonth: false,
+        isToday: false,
+        isFocused: false,
+      }
+    }
+
+    const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), dayNumber)
+    const key = toInputDate(date)
+    return {
+      key,
+      label: String(dayNumber),
+      isCurrentMonth: true,
+      isToday: key === todayKey,
+      isFocused: key === focusedKey,
+    }
+  })
+})
+
 const calendarGridStyle = computed(() => ({
-  gridTemplateColumns: `repeat(${visibleDays.value.length}, ${dayColumnWidth}px)`,
+  gridTemplateColumns: `64px repeat(${visibleDays.value.length}, ${dayColumnWidth}px)`,
   gridTemplateRows: `repeat(${timeSlots.length}, ${rowHeight}px)`,
+  height: `${timeSlots.length * rowHeight}px`,
 }))
 
 const currentTimeIndicator = computed(() => {
@@ -112,20 +225,16 @@ const currentTimeIndicator = computed(() => {
   const firstHour = timeSlots[0] ?? firstVisibleHour
   const lastHour = timeSlots[timeSlots.length - 1] ?? 23
 
-  if (dayIndex === -1) {
-    return null
-  }
+  if (dayIndex === -1) return null
 
   const currentHour = now.getHours()
-  if (currentHour < firstHour || currentHour >= lastHour + 1) {
-    return null
-  }
+  if (currentHour < firstHour || currentHour >= lastHour + 1) return null
 
   const minutesSinceStart = (currentHour - firstHour) * 60 + now.getMinutes()
 
-    return {
-      top: (minutesSinceStart / 60) * rowHeight,
-      label: now.toLocaleTimeString('en-US', {
+  return {
+    top: (minutesSinceStart / 60) * rowHeight,
+    label: now.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -135,47 +244,51 @@ const currentTimeIndicator = computed(() => {
 })
 
 const currentTimeBadgeTop = computed(() => {
-  if (!currentTimeIndicator.value) {
-    return null
-  }
-
+  if (!currentTimeIndicator.value) return null
   return headerHeight + currentTimeIndicator.value.top - bodyScrollTop.value
 })
 
 const currentUserName = computed(() => user.value?.name ?? 'Planix User')
+const normalizedFilterValue = computed(() => filters.value.trim().toLowerCase())
+const isFilterActive = computed(() => normalizedFilterValue.value.length > 0)
 
 const selectedEvent = computed(() => {
-  if (!selectedEventId.value) {
-    return null
-  }
-
+  if (!selectedEventId.value) return null
   return events.value.find((event) => event.id === selectedEventId.value || event._id === selectedEventId.value) ?? null
 })
 
-const weeklyEvents = computed(() => {
-  const start = currentWeekStart.value.getTime()
-  const end = addDays(currentWeekStart.value, visibleDays.value.length).getTime()
+const filteredEvents = computed(() => {
+  if (!isFilterActive.value) return events.value
 
-  return events.value
+  return events.value.filter((event) => {
+    const rawValue = event[filters.field as keyof CalendarEvent]
+    if (rawValue == null) return false
+    return String(rawValue).toLowerCase().includes(normalizedFilterValue.value)
+  })
+})
+
+const calendarEvents = computed(() =>
+  filteredEvents.value
     .map((event) => {
       const eventDate = new Date(event.date)
       const dayKey = toInputDate(eventDate)
       const dayIndex = visibleDays.value.findIndex((day) => day.key === dayKey)
 
-      if (dayIndex === -1) {
-        return null
-      }
+      if (dayIndex === -1) return null
 
       const startTime = event.startTime ?? '09:00'
       const endTime = event.endTime ?? '10:00'
-      const { hour: startHour, minute: startMinute } = parseTimeParts(startTime)
-      const { hour: endHour, minute: endMinute } = parseTimeParts(endTime)
-
       const firstHour = timeSlots[0] ?? firstVisibleHour
-      const startSlot = Math.max(0, startHour - firstHour)
-      const roundedEndHour = endMinute > 0 ? endHour + 1 : endHour
-      const endSlotRaw = Math.max(startSlot + 1, roundedEndHour - firstHour)
-      const span = Math.max(1, Math.min(timeSlots.length - startSlot, endSlotRaw - startSlot))
+      const firstVisibleMinute = firstHour * 60
+      const startMinutes = Math.max(getMinutesFromTime(startTime), firstVisibleMinute)
+      const rawEndMinutes = getMinutesFromTime(endTime)
+      const endMinutes = Math.max(startMinutes + 30, rawEndMinutes)
+      const minutesFromTop = startMinutes - firstVisibleMinute
+      const durationMinutes = Math.max(30, endMinutes - startMinutes)
+      const top = (minutesFromTop / 60) * rowHeight + 6
+      const height = Math.max((durationMinutes / 60) * rowHeight - 12, 36)
+      const left = timeColumnWidth + dayIndex * dayColumnWidth + 6
+      const width = dayColumnWidth - 12
 
       return {
         ...event,
@@ -183,9 +296,10 @@ const weeklyEvents = computed(() => {
         dayIndex,
         startTime,
         endTime,
-        span,
-        gridColumn: dayIndex + 1,
-        gridRow: startSlot + 1,
+        top,
+        left,
+        width,
+        height,
       }
     })
     .filter((event): event is NonNullable<typeof event> => Boolean(event))
@@ -194,13 +308,14 @@ const weeklyEvents = computed(() => {
       const secondTime = new Date(second.date).getTime()
       return firstTime - secondTime || first.startTime.localeCompare(second.startTime)
     })
-    .filter((event) => {
-      const timestamp = new Date(event.date).getTime()
-      return timestamp >= start && timestamp < end
-    })
-})
+)
 
-const eventsTodayCount = computed(() => weeklyEvents.value.length)
+const eventsThisYearCount = computed(() => filteredEvents.value.length)
+
+function clearFilters() {
+  filters.field = 'title'
+  filters.value = ''
+}
 
 function formatHour(hour: number) {
   const suffix = hour >= 12 ? 'PM' : 'AM'
@@ -224,23 +339,14 @@ function normalizeEvent(event: CalendarEvent) {
 }
 
 async function loadEvents() {
-  if (!user.value?.id) {
-    return
-  }
-
+  if (!user.value?.id) return
   isLoading.value = true
   pageError.value = ''
-
   try {
     const response = await fetch(`${API_BASE_URL}/events?owner=${encodeURIComponent(user.value.id)}`)
-
-    if (!response.ok) {
-      throw new Error('Unable to load events.')
-    }
-
+    if (!response.ok) throw new Error('Unable to load events.')
     const payload = (await response.json()) as CalendarEvent[]
     events.value = payload.map(normalizeEvent)
-
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to load events.'
     events.value = []
@@ -254,15 +360,12 @@ async function submitEvent() {
     pageError.value = 'You must be logged in to create events.'
     return
   }
-
   if (!eventForm.title.trim() || !eventForm.date) {
     pageError.value = 'Title and date are required.'
     return
   }
-
   isSaving.value = true
   pageError.value = ''
-
   try {
     const response = await fetch(`${API_BASE_URL}/events`, {
       method: 'POST',
@@ -281,16 +384,13 @@ async function submitEvent() {
         owner: user.value.id,
       }),
     })
-
     if (!response.ok) {
       const message = await response.text()
       throw new Error(message || 'Unable to create event.')
     }
-
     const createdEvent = normalizeEvent((await response.json()) as CalendarEvent)
     events.value = [createdEvent, ...events.value]
     selectedEventId.value = createdEvent.id ?? null
-
     eventForm.title = ''
     eventForm.description = ''
     eventForm.date = ''
@@ -305,47 +405,92 @@ async function submitEvent() {
   }
 }
 
-function goToPreviousWeek() {
-  weekOffset.value -= 1
+function startEditing() {
+  if (!selectedEvent.value) return
+  Object.assign(editForm, {
+    title: selectedEvent.value.title,
+    description: selectedEvent.value.description ?? '',
+    date: new Date(selectedEvent.value.date).toISOString().slice(0, 10),
+    startTime: selectedEvent.value.startTime ?? '09:00',
+    endTime: selectedEvent.value.endTime ?? '10:00',
+    category: selectedEvent.value.category ?? 'Work',
+    color: selectedEvent.value.color ?? '#cfdcff',
+  })
+  isEditing.value = true
 }
 
-function goToNextWeek() {
-  weekOffset.value += 1
+async function saveEdit() {
+  if (!selectedEvent.value || !user.value?.token) return
+  isSaving.value = true
+  pageError.value = ''
+  try {
+    const id = selectedEvent.value._id ?? selectedEvent.value.id
+    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${user.value.token}`,
+      },
+      body: JSON.stringify({
+        ...editForm,
+        date: new Date(`${editForm.date}T00:00:00`).toISOString(),
+      }),
+    })
+    if (!response.ok) throw new Error(await response.text())
+    const updated = normalizeEvent((await response.json()) as CalendarEvent)
+    events.value = events.value.map((e) => (e.id === updated.id ? updated : e))
+    isEditing.value = false
+  } catch (error) {
+    pageError.value = error instanceof Error ? error.message : 'Unable to save event.'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+async function deleteEvent() {
+  if (!selectedEvent.value || !user.value?.token) return
+  if (!confirm('Delete this event?')) return
+  try {
+    const id = selectedEvent.value._id ?? selectedEvent.value.id
+    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${user.value.token}` },
+    })
+    if (!response.ok) throw new Error(await response.text())
+    const deletedId = selectedEvent.value.id
+    events.value = events.value.filter((e) => e.id !== deletedId)
+    selectedEventId.value = null
+    isEditing.value = false
+  } catch (error) {
+    pageError.value = error instanceof Error ? error.message : 'Unable to delete event.'
+  }
 }
 
 function goToCurrentWeek() {
-  weekOffset.value = 0
+  void focusCalendarOnToday()
 }
 
 function syncHeaderScroll() {
-  if (!headerViewport.value || !bodyViewport.value) {
-    return
-  }
-
-  headerViewport.value.scrollLeft = bodyViewport.value.scrollLeft
+  if (!headerViewport.value || !bodyViewport.value) return
+  // body viewport includes the sticky 64px axis col; header doesn't, so offset by 64
+  headerViewport.value.scrollLeft = Math.max(0, bodyViewport.value.scrollLeft - 64)
 }
 
 function handleBodyScroll() {
-  if (!bodyViewport.value) {
-    return
-  }
-
+  if (!bodyViewport.value) return
   bodyScrollTop.value = bodyViewport.value.scrollTop
+  bodyScrollLeft.value = bodyViewport.value.scrollLeft
   syncHeaderScroll()
 }
 
 async function focusCalendarOnToday() {
   await nextTick()
-
   const viewport = bodyViewport.value
-  if (!viewport || !currentTimeIndicator.value) {
-    return
-  }
-
-  const todayOffset = currentTimeIndicator.value.dayIndex * dayColumnWidth
-  const targetLeft = Math.max(0, todayOffset - dayColumnWidth)
-  const targetTop = Math.max(0, currentTimeIndicator.value.top - 220)
-
+  const todayKey = toInputDate(new Date())
+  const todayIndex = visibleDays.value.findIndex((day) => day.key === todayKey)
+  if (!viewport || todayIndex === -1) return
+  const targetLeft = Math.max(0, todayIndex * dayColumnWidth - dayColumnWidth)
+  const targetTop = Math.max(0, (currentTimeIndicator.value?.top ?? rowHeight * 8) - 220)
   viewport.scrollLeft = targetLeft
   viewport.scrollTop = targetTop
   handleBodyScroll()
@@ -357,7 +502,7 @@ function handleLogout() {
 }
 
 onMounted(() => {
-  eventForm.date = visibleDays.value[0]?.key ?? toInputDate(new Date())
+  eventForm.date = toInputDate(new Date())
   void loadEvents()
   void focusCalendarOnToday()
 })
@@ -367,7 +512,7 @@ onMounted(() => {
   <main class="DashboardPage DashboardPage--calendar">
     <aside class="CalendarSidebar">
       <div class="CalendarSidebar__brand">
-        <strong>Planix</strong>
+        <p>Planix</p>
         <span>Calendar workspace</span>
       </div>
 
@@ -375,9 +520,44 @@ onMounted(() => {
         <button class="CalendarSidebar__link CalendarSidebar__link--active" type="button">Calendar</button>
       </nav>
 
+      <section class="CalendarMini">
+        <div class="CalendarMini__header">
+          <button type="button" class="CalendarMini__nav" @click="goToPreviousMonth" aria-label="Previous month">
+            ‹
+          </button>
+          <p>{{ sidebarMonthLabel }}</p>
+          <button type="button" class="CalendarMini__nav" @click="goToNextMonth" aria-label="Next month">
+            ›
+          </button>
+        </div>
+        <div class="CalendarMini__weekdays">
+          <span>Mo</span>
+          <span>Tu</span>
+          <span>We</span>
+          <span>Th</span>
+          <span>Fr</span>
+          <span>Sa</span>
+          <span>Su</span>
+        </div>
+        <div class="CalendarMini__grid">
+          <span
+            v-for="day in sidebarMonthDays"
+            :key="day.key"
+            class="CalendarMini__day"
+            :class="{
+              'CalendarMini__day--muted': !day.isCurrentMonth,
+              'CalendarMini__day--today': day.isToday,
+              'CalendarMini__day--focused': day.isFocused,
+            }"
+          >
+            {{ day.label }}
+          </span>
+        </div>
+      </section>
+
       <section class="CalendarSidebar__summary">
         <span>Overview</span>
-        <strong>{{ eventsTodayCount }} events this week</strong>
+        <p>{{ eventsThisYearCount }} events this year</p>
         <p>Use the calendar board to review events and add new ones from the right panel.</p>
       </section>
     </aside>
@@ -401,11 +581,18 @@ onMounted(() => {
       <section class="CalendarBoard">
         <div class="CalendarBoard__header">
           <div>
-            <strong>This week</strong>
-            <span>{{ eventsTodayCount }} events scheduled</span>
+            <p class="CalendarBoard__title">Year timeline</p>
+            <span>{{ eventsThisYearCount }} events scheduled</span>
           </div>
 
           <div class="CalendarBoard__controls">
+            <label class="CalendarFilter">
+              <select v-model="filters.field" aria-label="Filter field">
+                <option v-for="option in filterOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              </select>
+              <input v-model="filters.value" type="text" :placeholder="`Filter by ${filters.field}`" />
+              <button v-if="isFilterActive" type="button" class="CalendarFilter__clear" @click="clearFilters">Clear</button>
+            </label>
             <button type="button" @click="goToCurrentWeek">Today</button>
           </div>
         </div>
@@ -421,40 +608,48 @@ onMounted(() => {
                 <div class="CalendarHeaderTrack" :style="{ gridTemplateColumns: `repeat(${visibleDays.length}, ${dayColumnWidth}px)` }">
                   <div v-for="day in visibleDays" :key="day.key" class="CalendarGrid__dayHeader">
                     <span>{{ day.short }}</span>
-                    <strong>{{ day.label }}</strong>
+                    <p>{{ day.label }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="CalendarBodyShell">
-              <div class="CalendarAxis" :style="{ transform: `translateY(-${bodyScrollTop}px)` }">
-                <div v-for="hour in timeSlots" :key="hour" class="CalendarAxis__time">
-                  {{ formatHour(hour) }}
-                </div>
-              </div>
-
               <div ref="bodyViewport" class="CalendarGridViewport" @scroll="handleBodyScroll">
                 <div class="CalendarGrid CalendarGrid--week" :style="calendarGridStyle">
+                  <div class="CalendarAxisInline">
+                    <div v-for="hour in timeSlots" :key="hour" class="CalendarAxis__time">
+                      {{ formatHour(hour) }}
+                    </div>
+                  </div>
                   <template v-for="hour in timeSlots" :key="hour">
-                    <div v-for="day in visibleDays" :key="`${day.key}-${hour}`" class="CalendarGrid__slot"></div>
+                    <div
+                      v-for="(day, dayIdx) in visibleDays"
+                      :key="`${day.key}-${hour}`"
+                      class="CalendarGrid__slot"
+                      :style="{ gridColumn: dayIdx + 2 }"
+                    ></div>
                   </template>
 
-                  <article
-                    v-for="event in weeklyEvents"
-                    :key="event.id"
-                    class="CalendarEvent"
-                    :class="{ 'CalendarEvent--active': selectedEventId === event.id }"
-                    :style="{
-                      gridColumn: event.gridColumn,
-                      gridRow: `${event.gridRow} / span ${event.span}`,
-                      '--event-accent': event.color ?? '#cfdcff',
-                    }"
-                    @click="selectedEventId = event.id ?? null"
-                  >
-                    <strong>{{ event.title }}</strong>
-                    <span>{{ event.startTime }} - {{ event.endTime }}</span>
-                  </article>
+                  <div class="CalendarEventsLayer">
+                    <article
+                      v-for="event in calendarEvents"
+                      :key="event.id"
+                      class="CalendarEvent"
+                      :class="{ 'CalendarEvent--active': selectedEventId === event.id }"
+                      :style="{
+                        top: `${event.top}px`,
+                        left: `${event.left}px`,
+                        width: `${event.width}px`,
+                        height: `${event.height}px`,
+                        '--event-accent': event.color ?? '#cfdcff',
+                      }"
+                      @click="selectedEventId = event.id ?? null; isEditing = false"
+                    >
+                      <p class="CalendarEvent__title">{{ event.title }}</p>
+                      <span>{{ event.startTime }} - {{ event.endTime }}</span>
+                    </article>
+                  </div>
 
                   <div
                     v-if="currentTimeIndicator"
@@ -504,10 +699,20 @@ onMounted(() => {
                   </select>
                 </label>
 
-                <label class="EventComposer__field">
-                  <select v-model="eventForm.color">
-                    <option v-for="option in colorOptions" :key="option" :value="option">{{ option }}</option>
-                  </select>
+                <label class="EventComposer__field EventComposer__field--color">
+                  <span class="EventComposer__colorLabel">Event color</span>
+                  <div class="ColorPicker">
+                    <button
+                      v-for="opt in colorOptions"
+                      :key="opt.value"
+                      type="button"
+                      class="ColorPicker__swatch"
+                      :class="{ 'ColorPicker__swatch--active': eventForm.color === opt.value }"
+                      :style="{ '--swatch': opt.value }"
+                      :title="opt.label"
+                      @click="eventForm.color = opt.value"
+                    ></button>
+                  </div>
                 </label>
               </div>
 
@@ -523,31 +728,88 @@ onMounted(() => {
             <div class="CalendarDetails__section">
               <template v-if="selectedEvent">
                 <span class="CalendarDetails__eyebrow">Selected event</span>
-                <h2>{{ selectedEvent.title }}</h2>
-                <p>{{ formatEventDate(selectedEvent.date) }}</p>
-                <dl class="CalendarDetails__meta">
-                  <div>
-                    <dt>Time</dt>
-                    <dd>{{ selectedEvent.startTime || '09:00' }} - {{ selectedEvent.endTime || '10:00' }}</dd>
+
+                <!-- View mode -->
+                <template v-if="!isEditing">
+                  <h2>{{ selectedEvent.title }}</h2>
+                  <p>{{ formatEventDate(selectedEvent.date) }}</p>
+                  <dl class="CalendarDetails__meta">
+                    <div>
+                      <dt>Time</dt>
+                      <dd>{{ selectedEvent.startTime || '09:00' }} - {{ selectedEvent.endTime || '10:00' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Category</dt>
+                      <dd>{{ selectedEvent.category || 'General' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Owner</dt>
+                      <dd>{{ currentUserName }}</dd>
+                    </div>
+                  </dl>
+                  <dl class="CalendarDetails__meta">
+                    <div>
+                      <dt>Description</dt>
+                      <dd class="CalendarDetails__description">
+                        {{ selectedEvent.description || 'No description added for this event yet.' }}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div class="CalendarDetails__actions">
+                    <button class="CalendarDetails__editBtn" type="button" @click="startEditing">Edit</button>
+                    <button class="CalendarDetails__deleteBtn" type="button" @click="deleteEvent">Delete</button>
                   </div>
-                  <div>
-                    <dt>Category</dt>
-                    <dd>{{ selectedEvent.category || 'General' }}</dd>
+                </template>
+
+                <!-- Edit mode -->
+                <template v-else>
+                  <label class="EventComposer__field">
+                    <input v-model="editForm.title" type="text" placeholder="Event title" />
+                  </label>
+                  <label class="EventComposer__field">
+                    <input v-model="editForm.date" type="date" />
+                  </label>
+                  <div class="EventComposer__row">
+                    <label class="EventComposer__field">
+                      <input v-model="editForm.startTime" type="time" />
+                    </label>
+                    <label class="EventComposer__field">
+                      <input v-model="editForm.endTime" type="time" />
+                    </label>
                   </div>
-                <div>
-                  <dt>Owner</dt>
-                  <dd>{{ currentUserName }}</dd>
-                </div>
-              </dl>
-              <dl class="CalendarDetails__meta">
-                <div>
-                  <dt>Description</dt>
-                  <dd class="CalendarDetails__description">
-                    {{ selectedEvent.description || 'No description added for this event yet.' }}
-                  </dd>
-                </div>
-              </dl>
-            </template>
+                  <div class="EventComposer__row">
+                    <label class="EventComposer__field">
+                      <select v-model="editForm.category">
+                        <option v-for="opt in categoryOptions" :key="opt" :value="opt">{{ opt }}</option>
+                      </select>
+                    </label>
+                    <label class="EventComposer__field EventComposer__field--color">
+                      <span class="EventComposer__colorLabel">Event color</span>
+                      <div class="ColorPicker">
+                        <button
+                          v-for="opt in colorOptions"
+                          :key="opt.value"
+                          type="button"
+                          class="ColorPicker__swatch"
+                          :class="{ 'ColorPicker__swatch--active': editForm.color === opt.value }"
+                          :style="{ '--swatch': opt.value }"
+                          :title="opt.label"
+                          @click="editForm.color = opt.value"
+                        ></button>
+                      </div>
+                    </label>
+                  </div>
+                  <label class="EventComposer__field">
+                    <textarea v-model="editForm.description" rows="2" placeholder="Description"></textarea>
+                  </label>
+                  <div class="CalendarDetails__actions">
+                    <button class="CalendarDetails__editBtn" type="button" :disabled="isSaving" @click="saveEdit">
+                      {{ isSaving ? 'Saving…' : 'Save' }}
+                    </button>
+                    <button class="CalendarDetails__deleteBtn" type="button" @click="isEditing = false">Cancel</button>
+                  </div>
+                </template>
+              </template>
 
               <template v-else>
                 <span class="CalendarDetails__eyebrow">Nothing selected</span>
