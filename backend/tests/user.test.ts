@@ -33,6 +33,25 @@ export default function userTestCollection() {
     expect(json.error).toEqual('"password" length must be at least 6 characters long')
   })
 
+  test('Registration fails when email already exists', async ({ request }) => {
+    test.setTimeout(10_000)
+
+    const user = {
+      name: 'Sali Bseso',
+      email: `sali.duplicate.${Date.now()}@example.com`,
+      password: '123456',
+    }
+
+    const firstResponse = await request.post('/api/auth/register', { data: user })
+    expect(firstResponse.status()).toBe(201)
+
+    const secondResponse = await request.post('/api/auth/register', { data: user })
+    const json = await secondResponse.json()
+
+    expect(secondResponse.status()).toBe(400)
+    expect(json.error).toBe('Email already exists.')
+  })
+
   test('Valid user login info', async ({ request }) => {
     test.setTimeout(10_000)
 
