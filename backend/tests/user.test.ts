@@ -58,4 +58,28 @@ export default function userTestCollection() {
     expect(json.data.token).toBeTruthy()
     expect(json.data.userId).toBeTruthy()
   })
+
+  test('Login fails with wrong password', async ({ request }) => {
+    test.setTimeout(10_000)
+
+    const user = {
+      name: 'Sali Bseso',
+      email: `sali.wrongpass.${Date.now()}@example.com`,
+      password: '123456',
+    }
+
+    const registerResponse = await request.post('/api/auth/register', { data: user })
+    expect(registerResponse.status()).toBe(201)
+
+    const response = await request.post('/api/auth/login', {
+      data: {
+        email: user.email,
+        password: '654321',
+      },
+    })
+    const json = await response.json()
+
+    expect(response.status()).toBe(400)
+    expect(json.error).toBe('Password or email is wrong.')
+  })
 }
