@@ -1,6 +1,29 @@
 import { test, expect } from '@playwright/test'
 
 export default function eventTestCollection() {
+  test('Event creation fails without auth token', async ({ request }) => {
+    test.setTimeout(10_000)
+
+    const eventPayload = {
+      title: 'Unauthorized event',
+      description: 'This request should be rejected',
+      date: '2026-03-25T00:00:00.000Z',
+      startTime: '14:00',
+      endTime: '15:30',
+      color: '#f2c7dc',
+      category: 'Meeting',
+      owner: 'fake-user-id',
+    }
+
+    const response = await request.post('/api/events', {
+      data: eventPayload,
+    })
+    const json = await response.json()
+
+    expect(response.status()).toBe(401)
+    expect(json.error).toBe('Access Denied. Missing token.')
+  })
+
   test('event created by an authenticated user can be fetched from that user list', async ({ request }) => {
     test.setTimeout(30_000)
 
