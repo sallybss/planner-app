@@ -889,12 +889,11 @@ button {
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Header shell: corner + scrollable day headers */
+/* Header shell: single scrollable header track */
 .CalendarHeaderShell {
   min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  display: block;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -948,6 +947,7 @@ button {
 .CalendarEventsLayer {
   position: absolute;
   inset: 0;
+  display: grid;
   z-index: 3;
   pointer-events: none;
 }
@@ -1003,7 +1003,10 @@ button {
 }
 
 .CalendarEvent {
-  position: absolute;
+  position: relative;
+  align-self: start;
+  justify-self: stretch;
+  margin: 0 6px;
   z-index: 1;
   padding: 10px 12px 9px;
   border-radius: 12px;

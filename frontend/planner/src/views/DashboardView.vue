@@ -108,7 +108,10 @@ function endOfYear(date: Date) {
 }
 
 function toInputDate(date: Date) {
-  return date.toISOString().slice(0, 10)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 const currentYear = new Date().getFullYear()
@@ -218,6 +221,11 @@ const calendarGridStyle = computed(() => ({
   height: `${timeSlots.length * rowHeight}px`,
 }))
 
+const calendarEventsLayerStyle = computed(() => ({
+  gridTemplateColumns: `64px repeat(${visibleDays.value.length}, ${dayColumnWidth}px)`,
+  height: `${timeSlots.length * rowHeight}px`,
+}))
+
 const currentTimeIndicator = computed(() => {
   const now = new Date()
   const todayKey = toInputDate(now)
@@ -287,8 +295,6 @@ const calendarEvents = computed(() =>
       const durationMinutes = Math.max(30, endMinutes - startMinutes)
       const top = (minutesFromTop / 60) * rowHeight + 6
       const height = Math.max((durationMinutes / 60) * rowHeight - 12, 36)
-      const left = timeColumnWidth + dayIndex * dayColumnWidth + 6
-      const width = dayColumnWidth - 12
 
       return {
         ...event,
@@ -297,8 +303,6 @@ const calendarEvents = computed(() =>
         startTime,
         endTime,
         top,
-        left,
-        width,
         height,
       }
     })
@@ -472,8 +476,7 @@ function goToCurrentWeek() {
 
 function syncHeaderScroll() {
   if (!headerViewport.value || !bodyViewport.value) return
-  // body viewport includes the sticky 64px axis col; header doesn't, so offset by 64
-  headerViewport.value.scrollLeft = Math.max(0, bodyViewport.value.scrollLeft - 64)
+  headerViewport.value.scrollLeft = bodyViewport.value.scrollLeft
 }
 
 function handleBodyScroll() {
@@ -603,9 +606,9 @@ onMounted(() => {
         <div class="CalendarBoard__layout">
           <div class="CalendarGridShell">
             <div class="CalendarHeaderShell">
-              <div class="CalendarAxis__corner"></div>
               <div ref="headerViewport" class="CalendarHeaderViewport">
-                <div class="CalendarHeaderTrack" :style="{ gridTemplateColumns: `repeat(${visibleDays.length}, ${dayColumnWidth}px)` }">
+                <div class="CalendarHeaderTrack" :style="{ gridTemplateColumns: `64px repeat(${visibleDays.length}, ${dayColumnWidth}px)` }">
+                  <div class="CalendarAxis__corner"></div>
                   <div v-for="day in visibleDays" :key="day.key" class="CalendarGrid__dayHeader">
                     <span>{{ day.short }}</span>
                     <p>{{ day.label }}</p>
@@ -631,16 +634,15 @@ onMounted(() => {
                     ></div>
                   </template>
 
-                  <div class="CalendarEventsLayer">
+                  <div class="CalendarEventsLayer" :style="calendarEventsLayerStyle">
                     <article
                       v-for="event in calendarEvents"
                       :key="event.id"
                       class="CalendarEvent"
                       :class="{ 'CalendarEvent--active': selectedEventId === event.id }"
                       :style="{
+                        gridColumn: event.dayIndex + 2,
                         top: `${event.top}px`,
-                        left: `${event.left}px`,
-                        width: `${event.width}px`,
                         height: `${event.height}px`,
                         '--event-accent': event.color ?? '#cfdcff',
                       }"
