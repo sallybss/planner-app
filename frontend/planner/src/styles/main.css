@@ -641,7 +641,6 @@ button {
   background: linear-gradient(135deg, #ffffff, #daceff);
 }
 
-/* ── Color Picker Swatches ── */
 .ColorPicker {
   display: flex;
   gap: 8px;
@@ -683,8 +682,7 @@ button {
   background-position: center;
 }
 
-/* Swatch tooltip via title – native browser handles it.
-   For a custom tooltip, use this: */
+
 .ColorPicker__swatch[title]:hover::before {
   content: attr(title);
   position: absolute;
@@ -889,7 +887,6 @@ button {
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Header shell: single scrollable header track */
 .CalendarHeaderShell {
   min-width: 0;
   min-height: 0;
@@ -897,7 +894,6 @@ button {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Body shell: now just a single scrollable area — no separate axis column */
 .CalendarBodyShell {
   min-width: 0;
   min-height: 0;
@@ -922,7 +918,6 @@ button {
   display: grid;
 }
 
-/* The single scrollable viewport — spans the full width now */
 .CalendarGridViewport {
   height: 100%;
   width: 100%;
@@ -933,13 +928,11 @@ button {
   scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
-/* Grid now includes the axis as first column (64px) + day columns */
 .CalendarGrid--week {
   position: relative;
   width: max-content;
   min-width: 100%;
   display: grid;
-  /* gridTemplateColumns set via :style on the element — axis col prepended there */
   grid-template-rows: repeat(23, 44px);
   gap: 0;
 }
@@ -952,7 +945,6 @@ button {
   pointer-events: none;
 }
 
-/* Inline axis lives inside the scrolling grid, sticky to the left */
 .CalendarAxisInline {
   position: sticky;
   left: 0;
@@ -1152,7 +1144,6 @@ button {
   color: #fff;
 }
 
-/* ── Edit / Delete Actions ── */
 .CalendarDetails__actions {
   display: flex;
   gap: 8px;
