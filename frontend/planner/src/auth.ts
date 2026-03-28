@@ -19,7 +19,7 @@ type LoginResponse = {
 }
 
 const savedSession = (() => {
-  const raw = localStorage.getItem(storageKey)
+  const raw = sessionStorage.getItem(storageKey)
 
   if (!raw) {
     return null
@@ -28,7 +28,7 @@ const savedSession = (() => {
   try {
     return JSON.parse(raw) as StoredSession
   } catch {
-    localStorage.removeItem(storageKey)
+    sessionStorage.removeItem(storageKey)
     return null
   }
 })()
@@ -41,11 +41,11 @@ const state = reactive<{
 
 function persistSession(session: StoredSession | null) {
   if (!session) {
-    localStorage.removeItem(storageKey)
+    sessionStorage.removeItem(storageKey)
     return
   }
 
-  localStorage.setItem(storageKey, JSON.stringify(session))
+  sessionStorage.setItem(storageKey, JSON.stringify(session))
 }
 
 async function parseJson<T>(response: Response): Promise<T | null> {
