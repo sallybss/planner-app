@@ -4,9 +4,9 @@ Planix is a full-stack planning app for managing personal schedules in a clean w
 
 ## Live Links
 
-- Frontend: https://planix-2656e.onrender.com
-- API: https://planix-api-irvt.onrender.com/api
-- Swagger Docs: https://planix-api-irvt.onrender.com/swagger
+- Frontend: https://planix-265e.onrender.com
+- API: https://planix-api-rjvt.onrender.com/api
+- Swagger Docs: https://planix-api-rjvt.onrender.com/swagger/
 
 ## What The Product Does
 
@@ -125,7 +125,7 @@ Main API areas:
 
 For full request and response details, use the live Swagger docs:
 
-- https://planix-api-irvt.onrender.com/swagger
+- https://planix-api-rjvt.onrender.com/swagger/
 
 ## Current Product Behavior
 

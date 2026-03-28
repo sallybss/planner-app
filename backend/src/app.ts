@@ -18,7 +18,7 @@ const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:3000",
-  "https://planix-2656e.onrender.com",
+  "https://planix-265e.onrender.com",
   ...configuredOrigins,
 ]);
 
