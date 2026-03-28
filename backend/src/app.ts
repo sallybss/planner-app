@@ -9,18 +9,30 @@ dotenvFlow.config();
 
 const app: Application = express();
 
+const configuredOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:3000",
   "https://planix-2656e.onrender.com",
+  ...configuredOrigins,
 ]);
+
+function isAllowedOrigin(origin: string) {
+  if (allowedOrigins.has(origin)) return true;
+
+  return /^https:\/\/planix-[a-z0-9-]+\.onrender\.com$/i.test(origin);
+}
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.has(origin)) return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
 
     return callback(null, false);
   },
@@ -29,6 +41,7 @@ const corsOptions: cors.CorsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 
