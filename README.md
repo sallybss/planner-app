@@ -1,5 +1,7 @@
 # Planix
 
+[![Node.JS CI/CD](https://github.com/sallybss/planner-app/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/sallybss/planner-app/actions/workflows/main.yml)
+
 Planix is a full-stack planning app for managing personal schedules in a clean weekly calendar view. It includes account registration and login, protected event management, a dashboard-style calendar interface and a documented REST API.
 
 ## Live Links
