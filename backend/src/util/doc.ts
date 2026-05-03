@@ -12,10 +12,10 @@ export async function setupDocs(app: Application) {
   const swaggerDefinition = {
     openapi: "3.0.0",
     info: {
-      title: "Planner Events API",
+      title: "Planix API",
       version: "1.0.0",
       description:
-        "MongoDB + Express + TypeScript REST API for managing planner events",
+        "MongoDB + Express + TypeScript REST API for managing calendar events and workspace modules.",
     },
     servers: [
       {
@@ -42,6 +42,36 @@ export async function setupDocs(app: Application) {
             endTime: { type: "string" },
             color: { type: "string" },
             category: { type: "string" },
+            owner: { type: "string" },
+          },
+        },
+        Task: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            description: { type: "string" },
+            status: { type: "string", enum: ["todo", "in-progress", "done"] },
+            priority: { type: "string", enum: ["low", "medium", "high"] },
+            owner: { type: "string" },
+          },
+        },
+        Note: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            content: { type: "string" },
+            tone: { type: "string", enum: ["charcoal", "amber", "mint", "violet"] },
+            owner: { type: "string" },
+          },
+        },
+        BudgetEntry: {
+          type: "object",
+          properties: {
+            month: { type: "string", example: "2026-05" },
+            type: { type: "string", enum: ["income", "fixed", "variable", "savings"] },
+            category: { type: "string" },
+            label: { type: "string" },
+            amount: { type: "number" },
             owner: { type: "string" },
           },
         },

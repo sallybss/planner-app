@@ -375,7 +375,8 @@ button {
   overflow: hidden;
 }
 
-.DashboardPage--calendar {
+.DashboardPage--calendar,
+.DashboardPage--app {
   grid-template-columns: 250px minmax(0, 1fr);
   gap: 0;
   background: #050507;
@@ -517,6 +518,7 @@ button {
 }
 
 .CalendarSidebar__link {
+  display: block;
   width: 100%;
   text-align: left;
   padding: 13px 14px;
@@ -524,6 +526,7 @@ button {
   border-radius: 18px;
   color: #fff;
   background: rgba(255, 255, 255, 0.04);
+  text-decoration: none;
 }
 
 .CalendarSidebar__link--active {
@@ -1185,6 +1188,327 @@ button {
   background: rgba(255, 80, 80, 0.18);
 }
 
+.WorkspaceSummaryCard {
+  margin-top: auto;
+}
+
+.BoardPage,
+.BudgetPage,
+.NotesPage {
+  min-height: 0;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.BoardHero,
+.FeatureIntro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(153, 118, 255, 0.18), transparent 30%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.BoardHero__title,
+.FeatureIntro__title,
+.BudgetTableCard__header h2,
+.BoardColumn__header h2,
+.NoteCard h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+}
+
+.BoardHero span,
+.FeatureIntro span,
+.BudgetTableCard__header p,
+.BoardColumn__header p,
+.NoteCard p,
+.BoardCard p,
+.BoardColumn__empty {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.BoardLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  min-height: 0;
+}
+
+.BoardColumns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+
+.BoardColumn {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  min-height: 520px;
+}
+
+.BoardColumn__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.BoardColumn__header span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.BoardColumn__cards {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.BoardCard {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: left;
+  color: #fff;
+}
+
+.BoardCard--active {
+  border-color: rgba(205, 197, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.BoardCard__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.BoardCard__priority {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.BoardCard__priority[data-priority='low'] {
+  background: rgba(146, 220, 184, 0.14);
+  color: #9be1b7;
+}
+
+.BoardCard__priority[data-priority='medium'] {
+  background: rgba(210, 208, 255, 0.14);
+  color: #d8d3ff;
+}
+
+.BoardCard__priority[data-priority='high'] {
+  background: rgba(255, 159, 159, 0.14);
+  color: #ffaeae;
+}
+
+.BoardCard h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.BoardCard p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.BoardColumn__empty {
+  min-height: 82px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+}
+
+.BudgetHighlights {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.BudgetLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  min-height: 0;
+}
+
+.BudgetMetric {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+}
+
+.BudgetMetric span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.BudgetMetric strong {
+  font-size: 24px;
+}
+
+.BudgetMetric[data-tone='mint'] {
+  background: linear-gradient(180deg, rgba(112, 199, 158, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.BudgetMetric[data-tone='sand'] {
+  background: linear-gradient(180deg, rgba(232, 205, 145, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.BudgetMetric[data-tone='peach'] {
+  background: linear-gradient(180deg, rgba(255, 171, 131, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.BudgetMetric[data-tone='violet'] {
+  background: linear-gradient(180deg, rgba(175, 142, 255, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.BudgetTableCard {
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.BudgetTableWrap {
+  overflow: auto;
+}
+
+.BudgetTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+  color: #fff;
+}
+
+.BudgetTable th,
+.BudgetTable td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.BudgetTable th {
+  color: rgba(255, 255, 255, 0.54);
+  font-weight: 600;
+}
+
+.BudgetTable__row {
+  cursor: pointer;
+}
+
+.BudgetTable__row--active td {
+  background: rgba(208, 199, 255, 0.08);
+}
+
+.NotesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.NotesLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  min-height: 0;
+}
+
+.NoteCard {
+  display: grid;
+  gap: 12px;
+  min-height: 220px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(255, 229, 146, 0.1), transparent 30%),
+    rgba(255, 255, 255, 0.04);
+  text-align: left;
+  color: #fff;
+}
+
+.NoteCard--active {
+  border-color: rgba(205, 197, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.NoteCard__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.NoteCard__date {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.NoteCard--amber {
+  background:
+    radial-gradient(circle at top right, rgba(255, 207, 130, 0.16), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.NoteCard--mint {
+  background:
+    radial-gradient(circle at top right, rgba(137, 233, 188, 0.14), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.NoteCard--violet {
+  background:
+    radial-gradient(circle at top right, rgba(187, 154, 255, 0.16), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.NotesSearch {
+  min-width: 220px;
+}
+
 @media (max-width: 1100px) {
   .AuthPage,
   .DashboardPage {
@@ -1195,7 +1519,8 @@ button {
     min-height: 420px;
   }
 
-  .DashboardPage--calendar {
+  .DashboardPage--calendar,
+  .DashboardPage--app {
     height: auto;
     min-height: 100vh;
   }
@@ -1206,6 +1531,15 @@ button {
   }
 
   .CalendarBoard__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .BoardLayout,
+  .BoardColumns,
+  .BudgetLayout,
+  .NotesLayout,
+  .BudgetHighlights,
+  .NotesGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1241,6 +1575,10 @@ button {
 
   .CalendarWorkspace__actions {
     display: grid;
+  }
+
+  .BoardColumn {
+    min-height: 280px;
   }
 
   .CalendarGrid--week {

@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, useTemplateRef } from 'vue'
-import { useRouter } from 'vue-router'
+import AppShell from '../components/AppShell.vue'
 import { useAuth } from '../auth'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api'
-const router = useRouter()
-const { user, initials, logout } = useAuth()
+const { user } = useAuth()
 const dayColumnWidth = 150
 const timeColumnWidth = 64
 const headerHeight = 60
@@ -499,11 +498,6 @@ async function focusCalendarOnToday() {
   handleBodyScroll()
 }
 
-function handleLogout() {
-  logout()
-  void router.push('/login')
-}
-
 onMounted(() => {
   eventForm.date = toInputDate(new Date())
   void loadEvents()
@@ -512,17 +506,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="DashboardPage DashboardPage--calendar">
-    <aside class="CalendarSidebar">
-      <div class="CalendarSidebar__brand">
-        <p>Planix</p>
-        <span>Calendar workspace</span>
-      </div>
-
-      <nav class="CalendarSidebar__nav">
-        <button class="CalendarSidebar__link CalendarSidebar__link--active" type="button">Calendar</button>
-      </nav>
-
+  <AppShell active-section="calendar" eyebrow="Weekly calendar" :title="currentMonthLabel">
+    <template #sidebar>
       <section class="CalendarMini">
         <div class="CalendarMini__header">
           <button type="button" class="CalendarMini__nav" @click="goToPreviousMonth" aria-label="Previous month">
@@ -563,24 +548,7 @@ onMounted(() => {
         <p>{{ eventsThisYearCount }} events this year</p>
         <p>Use the calendar board to review events and add new ones from the right panel.</p>
       </section>
-    </aside>
-
-    <section class="CalendarWorkspace">
-      <header class="CalendarWorkspace__topbar">
-        <div>
-          <span class="CalendarWorkspace__eyebrow">Weekly calendar</span>
-          <h1>{{ currentMonthLabel }}</h1>
-        </div>
-
-        <div class="CalendarWorkspace__actions">
-          <div class="CalendarWorkspace__user">
-            <span class="CalendarWorkspace__userMeta">{{ currentUserName }}</span>
-            <span class="CalendarWorkspace__userAvatar">{{ initials }}</span>
-          </div>
-          <button class="CalendarWorkspace__logout" type="button" @click="handleLogout">Log out</button>
-        </div>
-      </header>
-
+    </template>
       <section class="CalendarBoard">
         <div class="CalendarBoard__header">
           <div>
@@ -822,6 +790,5 @@ onMounted(() => {
           </aside>
         </div>
       </section>
-    </section>
-  </main>
+  </AppShell>
 </template>
