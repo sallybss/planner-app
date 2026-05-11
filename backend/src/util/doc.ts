@@ -75,6 +75,14 @@ export async function setupDocs(app: Application) {
             owner: { type: "string" },
           },
         },
+        BudgetRowDef: {
+          type: "object",
+          properties: {
+            label: { type: "string", example: "Main salary" },
+            type: { type: "string", enum: ["income", "fixed", "variable", "savings"] },
+            owner: { type: "string" },
+          },
+        },
         User: {
           type: "object",
           properties: {

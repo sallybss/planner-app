@@ -69,7 +69,9 @@ function handleLogout() {
         </div>
       </header>
 
-      <slot />
+      <div class="CalendarWorkspace__body">
+        <slot />
+      </div>
     </section>
   </main>
 </template>

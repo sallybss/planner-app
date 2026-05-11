@@ -86,7 +86,7 @@ export async function updateNoteById(req: Request, res: Response) {
     await connect();
 
     const update = pickNoteBody(req.body);
-    const result = await noteModel.findByIdAndUpdate(req.params.id, update, { new: true });
+    const result = await noteModel.findByIdAndUpdate(req.params.id, update, { returnDocument: 'after' });
     if (!result) {
       res.status(404).send("Cannot update note with id=" + req.params.id);
       return;

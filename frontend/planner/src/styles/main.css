@@ -711,11 +711,20 @@ button {
   grid-template-rows: auto 1fr;
   min-height: 0;
   overflow: hidden;
-  padding: 18px 18px 18px;
+  padding: 18px 18px 0;
   gap: 14px;
   background:
     radial-gradient(circle at top left, rgba(164, 113, 255, 0.18), transparent 20%),
     linear-gradient(180deg, #0a0910 0%, #07070a 100%);
+}
+
+.CalendarWorkspace__body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  padding-bottom: 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
 .CalendarWorkspace__topbar {
@@ -1072,7 +1081,7 @@ button {
 }
 
 .CalendarDetails {
-  padding: 0;
+  padding: 10px;
   border-radius: 22px;
   color: #fff;
   background: transparent;
@@ -1237,7 +1246,7 @@ button {
 
 .BoardLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-height: 0;
 }
@@ -1267,6 +1276,34 @@ button {
   gap: 12px;
 }
 
+.BoardColumn__headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.BoardColumn__addBtn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.BoardColumn__addBtn:hover {
+  background: rgba(208, 199, 255, 0.14);
+  border-color: rgba(205, 197, 255, 0.28);
+  color: #fff;
+}
+
 .BoardColumn__header span {
   display: inline-grid;
   place-items: center;
@@ -1282,23 +1319,132 @@ button {
   display: grid;
   align-content: start;
   gap: 10px;
+  overflow-y: auto;
+  max-height: 560px;
+  padding-right: 4px;
 }
 
-.BoardCard {
-  width: 100%;
+.BoardQuickAdd {
   display: grid;
   gap: 10px;
   padding: 14px;
+  border: 1px dashed rgba(205, 197, 255, 0.26);
+  border-radius: 18px;
+  background: rgba(205, 197, 255, 0.05);
+}
+
+.BoardQuickAdd__title,
+.BoardQuickAdd__description,
+.BoardQuickAdd__select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.BoardQuickAdd__title {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.BoardQuickAdd__description {
+  min-height: 92px;
+  padding: 12px;
+  border-radius: 14px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.BoardQuickAdd__select {
+  max-width: 150px;
+  padding: 7px 28px 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.25 1.25 6 6l4.75-4.75' fill='none' stroke='rgba(255,255,255,0.72)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 8px;
+}
+
+.BoardQuickAdd__title:focus,
+.BoardQuickAdd__description:focus,
+.BoardQuickAdd__select:focus {
+  border-color: rgba(205, 197, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.BoardQuickAdd__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.BoardQuickAdd__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.BoardQuickAdd__btn {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(17, 15, 28, 0.92);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.BoardQuickAdd__btn:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(34, 30, 54, 0.96);
+  color: #fff;
+}
+
+.BoardQuickAdd__btn--ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.BoardCard {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
-  text-align: left;
-  color: #fff;
 }
 
 .BoardCard--active {
   border-color: rgba(205, 197, 255, 0.45);
   box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.BoardCard:hover .BoardCard__actions,
+.BoardCard--active .BoardCard__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.BoardCard__surface {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  color: #fff;
+}
+
+.BoardCard__surface--editing {
+  gap: 12px;
 }
 
 .BoardCard__meta {
@@ -1335,9 +1481,144 @@ button {
   color: #ffaeae;
 }
 
+.BoardCard__editingTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.BoardCard__select,
+.BoardCard__titleInput,
+.BoardCard__descriptionInput {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.BoardCard__select {
+  min-width: 0;
+  padding: 7px 28px 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.25 1.25 6 6l4.75-4.75' fill='none' stroke='rgba(255,255,255,0.72)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 8px;
+}
+
+.BoardCard__select--priority {
+  max-width: 134px;
+}
+
+.BoardCard__titleButton,
 .BoardCard h3 {
   margin: 0;
   font-size: 16px;
+}
+
+.BoardCard__titleButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: text;
+}
+
+.BoardCard__titleInput {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.BoardCard__descriptionButton,
+.BoardCard p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.BoardCard__descriptionButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.58);
+  cursor: text;
+}
+
+.BoardCard__descriptionInput {
+  min-height: 116px;
+  padding: 12px;
+  border-radius: 14px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.BoardCard__titleInput:focus,
+.BoardCard__descriptionInput:focus,
+.BoardCard__select:focus {
+  border-color: rgba(205, 197, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.BoardCard__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.BoardCard__actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.BoardCard__actions--editing {
+  position: static;
+  opacity: 1;
+  pointer-events: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.BoardCard__actionBtn {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(17, 15, 28, 0.92);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.BoardCard__actionBtn:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(34, 30, 54, 0.96);
+  color: #fff;
+}
+
+.BoardCard__actionBtn--delete:hover {
+  border-color: rgba(255, 120, 120, 0.24);
+  background: rgba(87, 24, 24, 0.92);
+  color: #ffb6b6;
 }
 
 .BoardCard p {
@@ -1358,6 +1639,367 @@ button {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
+
+/* Spreadsheet budget layout */
+.BudgetSheetLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.BudgetControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.BudgetControls__toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.BudgetControls__tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.BudgetControls__tab:hover {
+  color: #fff;
+}
+
+.BudgetControls__tab--active {
+  background: rgba(208, 199, 255, 0.18);
+  color: #d0c7ff;
+}
+
+.BudgetControls__select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.BudgetControls__select:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.SpreadsheetWrap {
+  overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.SpreadsheetTable {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  font-size: 13px;
+}
+
+.SpreadsheetTable thead th {
+  padding: 10px 14px;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.SpreadsheetTable thead th.SpreadsheetTable__labelCol,
+.SpreadsheetTable thead th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: rgba(20, 17, 32, 0.98);
+  width: 210px;
+  min-width: 210px;
+  max-width: 210px;
+}
+
+.SpreadsheetTable__labelCol {
+  text-align: left !important;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: rgba(20, 17, 32, 0.98);
+  width: 210px;
+  min-width: 210px;
+  max-width: 210px;
+  white-space: nowrap;
+  padding: 10px 16px;
+  font-weight: 500;
+}
+
+/* Section headers (dark row, like Excel black rows) */
+.SpreadsheetTable__sectionHeader td {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Data rows */
+.SpreadsheetTable__dataRow td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.SpreadsheetTable__dataRow--savings td {
+  color: #a8d0ff;
+}
+
+/* Clickable cells */
+.SpreadsheetTable__cell {
+  text-align: right;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+.SpreadsheetTable__cell:hover {
+  background: rgba(208, 199, 255, 0.08);
+}
+
+.SpreadsheetTable__cell--selected {
+  background: rgba(208, 199, 255, 0.16) !important;
+  outline: 1px solid rgba(208, 199, 255, 0.4);
+  outline-offset: -1px;
+}
+
+.SpreadsheetTable__cell--empty {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Total rows */
+.SpreadsheetTable__totalRow td {
+  padding: 10px 14px;
+  text-align: right;
+  font-weight: 700;
+  white-space: nowrap;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.SpreadsheetTable__totalRow--income td {
+  color: #92dcb8;
+  background: rgba(112, 199, 158, 0.06);
+}
+
+.SpreadsheetTable__totalRow--expense td {
+  color: #ff9f9f;
+  background: rgba(255, 120, 120, 0.06);
+}
+
+.SpreadsheetTable__totalRow--savings td {
+  color: #a8d0ff;
+  background: rgba(100, 180, 255, 0.06);
+  font-size: 14px;
+}
+
+.SpreadsheetTable__cell--negative {
+  color: #ff9f9f !important;
+}
+
+.SpreadsheetTable__cellInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: right;
+  padding: 0;
+  min-width: 0;
+}
+
+.SpreadsheetTable__cellInput::-webkit-outer-spin-button,
+.SpreadsheetTable__cellInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.SpreadsheetTable__cellInput[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Cell panel */
+/* Row label with edit/delete controls */
+.RowLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.RowLabel__text,
+.RowLabel__textButton {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RowLabel__textButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: text;
+}
+
+.RowLabel__textButton:hover {
+  color: #fff;
+}
+
+.RowLabel__actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.SpreadsheetTable__dataRow:hover .RowLabel__actions {
+  display: flex;
+}
+
+.RowLabel__btn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.RowLabel__btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.RowLabel__btn--delete:hover {
+  background: rgba(255, 100, 100, 0.18);
+  color: #ff9f9f;
+}
+
+.RowLabel__input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid rgba(208, 199, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(208, 199, 255, 0.08);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+/* Add row */
+.SpreadsheetTable__addRow td {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.AddRowBtn {
+  padding: 4px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.AddRowBtn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.AddRowForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.BudgetCellPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.BudgetCellPanel__hint {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.BudgetCellPanel__hintRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.BudgetCellPanel__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.BudgetCellPanel__dot--income { background: #92dcb8; }
+.BudgetCellPanel__dot--fixed { background: #ff9f9f; }
+.BudgetCellPanel__dot--variable { background: #ffb97a; }
+.BudgetCellPanel__dot--savings { background: #a8d0ff; }
 
 .BudgetLayout {
   display: grid;
@@ -1443,27 +2085,231 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
 }
 
 .NotesLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-height: 0;
 }
 
-.NoteCard {
+.NoteAddTile,
+.NoteCreateCard {
+  min-height: 232px;
+  border-radius: 20px;
+}
+
+.NoteAddTile {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.48);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.NoteAddTile:hover {
+  border-color: rgba(205, 197, 255, 0.34);
+  background: rgba(205, 197, 255, 0.05);
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.NoteAddTile__plus {
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 200;
+}
+
+.NoteCreateCard {
   display: grid;
   gap: 12px;
-  min-height: 220px;
   padding: 20px;
-  border-radius: 24px;
+  border: 1px dashed rgba(205, 197, 255, 0.26);
+  background: rgba(205, 197, 255, 0.04);
+}
+
+.NoteCreateCard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.NoteCreateCard__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.NoteCreateCard__toneField {
+  flex-shrink: 0;
+}
+
+.NoteCreateCard__toneSelect,
+.NoteCreateCard__titleInput,
+.NoteCreateCard__contentInput {
+  width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(circle at top right, rgba(255, 229, 146, 0.1), transparent 30%),
-    rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.NoteCreateCard__toneSelect {
+  min-width: 110px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.NoteCreateCard__titleInput {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.NoteCreateCard__contentInput {
+  min-height: 140px;
+  max-height: 260px;
+  padding: 12px;
+  border-radius: 14px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.NoteCreateCard__toneSelect:focus,
+.NoteCreateCard__titleInput:focus,
+.NoteCreateCard__contentInput:focus {
+  border-color: rgba(205, 197, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.NoteCreateCard__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.NoteCreateCard__btn {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(17, 15, 28, 0.92);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.NoteCreateCard__btn:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(34, 30, 54, 0.96);
+  color: #fff;
+}
+
+.NoteCreateCard__btn--ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.NoteCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  min-height: 232px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.NoteCard:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.NoteCard:hover .NoteCard__actions,
+.NoteCard--active .NoteCard__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.NoteCard__surface {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 232px;
+  height: 100%;
+  padding: 20px;
+  border: none;
+  border-radius: 20px;
+  background: transparent;
   text-align: left;
   color: #fff;
+  cursor: pointer;
+}
+
+.NoteCard__surface--editing {
+  cursor: default;
+}
+
+.NoteCard__actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.NoteCard__actions--editing {
+  position: static;
+  opacity: 1;
+  pointer-events: auto;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.NoteCard__actionBtn {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(17, 15, 28, 0.92);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.NoteCard__actionBtn:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(34, 30, 54, 0.96);
+  color: #fff;
+}
+
+.NoteCard__actionBtn--delete:hover {
+  border-color: rgba(255, 120, 120, 0.24);
+  background: rgba(87, 24, 24, 0.92);
+  color: #ffb6b6;
 }
 
 .NoteCard--active {
@@ -1471,42 +2317,192 @@ button {
   box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
 }
 
-.NoteCard__eyebrow {
-  display: inline-flex;
-  width: fit-content;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.64);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+.NoteCard__date {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.03em;
 }
 
-.NoteCard__date {
-  color: rgba(255, 255, 255, 0.42);
+.NoteCard__editingTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.NoteCard__toneField {
+  flex-shrink: 0;
+}
+
+.NoteCard__toneSelect,
+.NoteCard__titleInput,
+.NoteCard__contentInput {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.NoteCard__toneSelect {
+  min-width: 110px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.NoteCard__titleButton,
+.NoteCard__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.NoteCard__titleButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: text;
+}
+
+.NoteCard__titleInput {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.NoteCard__titleInput:focus,
+.NoteCard__contentInput:focus,
+.NoteCard__toneSelect:focus {
+  border-color: rgba(205, 197, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(205, 197, 255, 0.08);
+}
+
+.NoteCard__contentButton,
+.NoteCard__content {
+  flex: 1;
+  min-height: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  overflow-y: auto;
+  padding-right: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.NoteCard__contentButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: text;
+}
+
+.NoteCard__contentInput {
+  min-height: 140px;
+  max-height: 260px;
+  padding: 12px;
+  border-radius: 14px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.NoteCard__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 12px;
+}
+
+.NoteCard__timestamp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.NoteCard__clock {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.NoteCard--charcoal {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .NoteCard--amber {
-  background:
-    radial-gradient(circle at top right, rgba(255, 207, 130, 0.16), transparent 34%),
-    rgba(255, 255, 255, 0.04);
+  background: rgba(255, 200, 100, 0.07);
+  border-color: rgba(255, 200, 100, 0.15);
 }
 
 .NoteCard--mint {
-  background:
-    radial-gradient(circle at top right, rgba(137, 233, 188, 0.14), transparent 34%),
-    rgba(255, 255, 255, 0.04);
+  background: rgba(100, 220, 160, 0.07);
+  border-color: rgba(100, 220, 160, 0.15);
 }
 
 .NoteCard--violet {
-  background:
-    radial-gradient(circle at top right, rgba(187, 154, 255, 0.16), transparent 34%),
-    rgba(255, 255, 255, 0.04);
+  background: rgba(180, 140, 255, 0.07);
+  border-color: rgba(180, 140, 255, 0.15);
 }
 
 .NotesSearch {
-  min-width: 220px;
+  min-width: 280px;
+  padding: 8px 10px;
+  gap: 10px;
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 30px rgba(8, 7, 15, 0.18);
+}
+
+.NotesSearch:focus-within {
+  border-color: rgba(205, 197, 255, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 4px rgba(205, 197, 255, 0.08),
+    0 12px 30px rgba(8, 7, 15, 0.18);
+}
+
+.NotesSearch__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.NotesSearch__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.NotesSearch input {
+  width: 100%;
+  height: 36px;
+  padding: 0 16px 0 2px;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  background: transparent;
+}
+
+.NotesSearch input::placeholder {
+  color: rgba(255, 255, 255, 0.34);
 }
 
 @media (max-width: 1100px) {
@@ -1537,6 +2533,7 @@ button {
   .BoardLayout,
   .BoardColumns,
   .BudgetLayout,
+  .BudgetSheetLayout,
   .NotesLayout,
   .BudgetHighlights,
   .NotesGrid {

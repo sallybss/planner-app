@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import AppShell from '../components/AppShell.vue'
 import { useAuth } from '../auth'
 
@@ -29,18 +29,19 @@ const columns: Array<{ key: TaskStatus; title: string; caption: string }> = [
 
 const tasks = ref<TaskCard[]>([])
 const draggedTaskId = ref<string | null>(null)
-const selectedTaskId = ref<string | null>(null)
+const editingTaskId = ref<string | null>(null)
+const addingTaskStatus = ref<TaskStatus | null>(null)
 const isLoading = ref(false)
 const isSaving = ref(false)
 const pageError = ref('')
 
-const taskForm = reactive({
+const quickAddForm = reactive({
   title: '',
   description: '',
   priority: 'medium' as TaskPriority,
 })
 
-const editForm = reactive({
+const inlineEditForm = reactive({
   title: '',
   description: '',
   priority: 'medium' as TaskPriority,
@@ -59,10 +60,6 @@ const tasksByStatus = computed(() =>
     ...column,
     tasks: tasks.value.filter((task) => task.status === column.key),
   })),
-)
-
-const selectedTask = computed(
-  () => tasks.value.find((task) => task.id === selectedTaskId.value || task._id === selectedTaskId.value) ?? null,
 )
 
 async function parseResponseError(response: Response, fallback: string) {
@@ -98,13 +95,19 @@ async function loadTasks() {
   }
 }
 
-async function submitTask() {
+async function createTask(options: {
+  title: string
+  description: string
+  priority: TaskPriority
+  status: TaskStatus
+  reset?: () => void
+}) {
   if (!user.value?.id || !user.value.token) {
     pageError.value = 'You must be logged in to create tasks.'
     return
   }
 
-  if (!taskForm.title.trim()) {
+  if (!options.title.trim()) {
     pageError.value = 'Task title is required.'
     return
   }
@@ -120,10 +123,10 @@ async function submitTask() {
         Authorization: `Bearer ${user.value.token}`,
       },
       body: JSON.stringify({
-        title: taskForm.title.trim(),
-        description: taskForm.description.trim(),
-        priority: taskForm.priority,
-        status: 'todo',
+        title: options.title.trim(),
+        description: options.description.trim(),
+        priority: options.priority,
+        status: options.status,
         owner: user.value.id,
       }),
     })
@@ -134,11 +137,7 @@ async function submitTask() {
 
     const created = normalizeTask((await response.json()) as TaskCard)
     tasks.value = [created, ...tasks.value]
-    selectedTaskId.value = created.id
-    taskForm.title = ''
-    taskForm.description = ''
-    taskForm.priority = 'medium'
-    syncEditForm(created)
+    options.reset?.()
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to create task.'
   } finally {
@@ -146,16 +145,67 @@ async function submitTask() {
   }
 }
 
-function syncEditForm(task: TaskCard) {
-  editForm.title = task.title
-  editForm.description = task.description ?? ''
-  editForm.priority = task.priority ?? 'medium'
-  editForm.status = task.status
+function startQuickAdd(status: TaskStatus) {
+  addingTaskStatus.value = status
+  quickAddForm.title = ''
+  quickAddForm.description = ''
+  quickAddForm.priority = 'medium'
+  nextTick(() => {
+    const input = document.querySelector<HTMLInputElement>(`.BoardColumn[data-column-status="${status}"] .BoardQuickAdd__title`)
+    input?.focus()
+  })
 }
 
-function selectTask(task: TaskCard) {
-  selectedTaskId.value = task.id ?? null
-  syncEditForm(task)
+function cancelQuickAdd() {
+  addingTaskStatus.value = null
+}
+
+async function submitQuickAdd(status: TaskStatus) {
+  await createTask({
+    title: quickAddForm.title,
+    description: quickAddForm.description,
+    priority: quickAddForm.priority,
+    status,
+    reset: () => {
+      quickAddForm.title = ''
+      quickAddForm.description = ''
+      quickAddForm.priority = 'medium'
+      addingTaskStatus.value = null
+    },
+  })
+}
+
+function syncInlineEditForm(task: TaskCard) {
+  inlineEditForm.title = task.title
+  inlineEditForm.description = task.description ?? ''
+  inlineEditForm.priority = task.priority ?? 'medium'
+  inlineEditForm.status = task.status
+}
+
+function isEditingTask(task: TaskCard) {
+  const taskId = task.id ?? task._id ?? null
+  return editingTaskId.value === taskId
+}
+
+function startEditTask(task: TaskCard, focus: 'title' | 'description' = 'title') {
+  const taskId = task.id ?? task._id ?? null
+  editingTaskId.value = taskId
+  syncInlineEditForm(task)
+  nextTick(() => {
+    const baseSelector = `.BoardCard[data-task-id="${taskId}"]`
+    if (focus === 'description') {
+      const descriptionInput = document.querySelector<HTMLTextAreaElement>(`${baseSelector} .BoardCard__descriptionInput`)
+      descriptionInput?.focus()
+      return
+    }
+    const titleInput = document.querySelector<HTMLInputElement>(`${baseSelector} .BoardCard__titleInput`)
+    titleInput?.focus()
+    titleInput?.select()
+  })
+}
+
+function cancelInlineEdit() {
+  editingTaskId.value = null
 }
 
 async function saveTask(task: TaskCard, updates: Partial<TaskCard>) {
@@ -183,24 +233,27 @@ async function saveTask(task: TaskCard, updates: Partial<TaskCard>) {
   return normalizeTask((await response.json()) as TaskCard)
 }
 
-async function updateSelectedTask() {
-  if (!selectedTask.value) return
+async function saveInlineTask(task: TaskCard) {
+  if (!inlineEditForm.title.trim()) {
+    pageError.value = 'Task title is required.'
+    return
+  }
 
   isSaving.value = true
   pageError.value = ''
 
   try {
-    const updated = await saveTask(selectedTask.value, {
-      title: editForm.title.trim(),
-      description: editForm.description.trim(),
-      priority: editForm.priority,
-      status: editForm.status,
+    const updated = await saveTask(task, {
+      title: inlineEditForm.title.trim(),
+      description: inlineEditForm.description.trim(),
+      priority: inlineEditForm.priority,
+      status: inlineEditForm.status,
     })
 
     if (!updated) return
 
     tasks.value = tasks.value.map((task) => (task.id === updated.id ? updated : task))
-    selectTask(updated)
+    editingTaskId.value = null
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to save task.'
   } finally {
@@ -208,11 +261,12 @@ async function updateSelectedTask() {
   }
 }
 
-async function removeSelectedTask() {
-  if (!selectedTask.value || !user.value?.token) return
+async function removeTask(task: TaskCard) {
+  if (!user.value?.token) return
 
-  const id = selectedTask.value.id ?? selectedTask.value._id
+  const id = task.id ?? task._id
   if (!id) return
+  if (!confirm(`Delete task "${task.title}"?`)) return
 
   isSaving.value = true
   pageError.value = ''
@@ -230,7 +284,9 @@ async function removeSelectedTask() {
     }
 
     tasks.value = tasks.value.filter((task) => task.id !== id)
-    selectedTaskId.value = null
+    if (editingTaskId.value === id) {
+      editingTaskId.value = null
+    }
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to delete task.'
   } finally {
@@ -261,8 +317,8 @@ async function moveTaskToStatus(status: TaskStatus) {
     if (!updated) return
 
     tasks.value = tasks.value.map((task) => (task.id === updated.id ? updated : task))
-    if (selectedTaskId.value === updated.id) {
-      selectTask(updated)
+    if (editingTaskId.value === updated.id) {
+      syncInlineEditForm(updated)
     }
   } catch (error) {
     draggedTask.status = previousStatus
@@ -304,6 +360,7 @@ onMounted(() => {
             v-for="column in tasksByStatus"
             :key="column.key"
             class="BoardColumn"
+            :data-column-status="column.key"
             @dragover.prevent
             @drop="moveTaskToStatus(column.key)"
           >
@@ -312,30 +369,123 @@ onMounted(() => {
                 <h2>{{ column.title }}</h2>
                 <p>{{ column.caption }}</p>
               </div>
-              <span>{{ column.tasks.length }}</span>
+              <div class="BoardColumn__headerActions">
+                <button class="BoardColumn__addBtn" type="button" @click="startQuickAdd(column.key)">+</button>
+                <span>{{ column.tasks.length }}</span>
+              </div>
             </header>
 
             <div class="BoardColumn__cards">
-              <button
+              <form
+                v-if="addingTaskStatus === column.key"
+                class="BoardQuickAdd"
+                @submit.prevent="submitQuickAdd(column.key)"
+              >
+                <input
+                  v-model="quickAddForm.title"
+                  class="BoardQuickAdd__title"
+                  type="text"
+                  placeholder="Task title"
+                  @keydown.esc="cancelQuickAdd"
+                />
+                <textarea
+                  v-model="quickAddForm.description"
+                  class="BoardQuickAdd__description"
+                  rows="3"
+                  placeholder="Task description"
+                  @keydown.esc="cancelQuickAdd"
+                />
+                <div class="BoardQuickAdd__footer">
+                  <select v-model="quickAddForm.priority" class="BoardQuickAdd__select">
+                    <option value="low">Low priority</option>
+                    <option value="medium">Medium priority</option>
+                    <option value="high">High priority</option>
+                  </select>
+                  <div class="BoardQuickAdd__actions">
+                    <button class="BoardQuickAdd__btn" type="submit" :disabled="isSaving">
+                      {{ isSaving ? 'Saving...' : 'Add' }}
+                    </button>
+                    <button class="BoardQuickAdd__btn BoardQuickAdd__btn--ghost" type="button" :disabled="isSaving" @click="cancelQuickAdd">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <article
                 v-for="task in column.tasks"
                 :key="task.id"
                 class="BoardCard"
-                :class="{ 'BoardCard--active': selectedTaskId === task.id }"
-                draggable="true"
-                type="button"
-                @click="selectTask(task)"
+                :data-task-id="task.id"
+                :class="{ 'BoardCard--active': isEditingTask(task) }"
+                :draggable="!isEditingTask(task)"
                 @dragstart="handleDragStart(task)"
                 @dragend="handleDragEnd"
               >
-                <div class="BoardCard__meta">
-                  <span class="BoardCard__priority" :data-priority="task.priority ?? 'medium'">
-                    {{ task.priority ?? 'medium' }}
-                  </span>
-                  <span>{{ column.title }}</span>
-                </div>
-                <h3>{{ task.title }}</h3>
-                <p>{{ task.description || 'No description yet.' }}</p>
-              </button>
+                <template v-if="isEditingTask(task)">
+                  <div class="BoardCard__surface BoardCard__surface--editing">
+                    <div class="BoardCard__editingTop">
+                      <select v-model="inlineEditForm.priority" class="BoardCard__select BoardCard__select--priority">
+                        <option value="low">Low priority</option>
+                        <option value="medium">Medium priority</option>
+                        <option value="high">High priority</option>
+                      </select>
+                      <select v-model="inlineEditForm.status" class="BoardCard__select">
+                        <option value="todo">To Do</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="done">Done</option>
+                      </select>
+                    </div>
+
+                    <input
+                      v-model="inlineEditForm.title"
+                      class="BoardCard__titleInput"
+                      type="text"
+                      placeholder="Task title"
+                      @keydown.enter.prevent="saveInlineTask(task)"
+                      @keydown.esc="cancelInlineEdit"
+                    />
+
+                    <textarea
+                      v-model="inlineEditForm.description"
+                      class="BoardCard__descriptionInput"
+                      rows="4"
+                      placeholder="Task description"
+                      @keydown.esc="cancelInlineEdit"
+                    />
+
+                    <div class="BoardCard__footer">
+                      <div class="BoardCard__actions BoardCard__actions--editing">
+                        <button class="BoardCard__actionBtn" type="button" :disabled="isSaving" @click="saveInlineTask(task)">
+                          {{ isSaving ? 'Saving...' : 'Save' }}
+                        </button>
+                        <button class="BoardCard__actionBtn" type="button" :disabled="isSaving" @click="cancelInlineEdit">Cancel</button>
+                        <button class="BoardCard__actionBtn BoardCard__actionBtn--delete" type="button" :disabled="isSaving" @click="removeTask(task)">Delete</button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <template v-else>
+                  <div class="BoardCard__actions">
+                    <button class="BoardCard__actionBtn" type="button" @click.stop="startEditTask(task)">Edit</button>
+                    <button class="BoardCard__actionBtn BoardCard__actionBtn--delete" type="button" @click.stop="removeTask(task)">Delete</button>
+                  </div>
+
+                  <div class="BoardCard__surface">
+                    <div class="BoardCard__meta">
+                      <span class="BoardCard__priority" :data-priority="task.priority ?? 'medium'">
+                        {{ task.priority ?? 'medium' }}
+                      </span>
+                      <span>{{ column.title }}</span>
+                    </div>
+                    <button class="BoardCard__titleButton" type="button" @click="startEditTask(task, 'title')">{{ task.title }}</button>
+                    <button class="BoardCard__descriptionButton" type="button" @click="startEditTask(task, 'description')">
+                      {{ task.description || 'No description yet.' }}
+                    </button>
+                  </div>
+                </template>
+              </article>
 
               <div v-if="column.tasks.length === 0" class="BoardColumn__empty">
                 Drop a task here
@@ -344,81 +494,6 @@ onMounted(() => {
           </section>
         </div>
 
-        <aside class="CalendarDetails CalendarDetails--panel">
-          <form class="EventComposer EventComposer--panel" @submit.prevent="submitTask">
-            <div class="EventComposer__header">
-              <span>Add task</span>
-              <p>Create a new kanban card for your workspace.</p>
-            </div>
-
-            <label class="EventComposer__field">
-              <input v-model="taskForm.title" type="text" placeholder="New task title" />
-            </label>
-
-            <label class="EventComposer__field">
-              <select v-model="taskForm.priority">
-                <option value="low">Low priority</option>
-                <option value="medium">Medium priority</option>
-                <option value="high">High priority</option>
-              </select>
-            </label>
-
-            <label class="EventComposer__field">
-              <textarea v-model="taskForm.description" rows="4" placeholder="Describe the task"></textarea>
-            </label>
-
-            <button class="EventComposer__submit" type="submit" :disabled="isSaving">
-              {{ isSaving ? 'Saving...' : 'Save task' }}
-            </button>
-          </form>
-
-          <div class="CalendarDetails__section">
-            <template v-if="selectedTask">
-              <span class="CalendarDetails__eyebrow">Selected task</span>
-              <h2>Edit card</h2>
-              <p>Update details or move this task to a different stage.</p>
-
-              <label class="EventComposer__field">
-                <input v-model="editForm.title" type="text" placeholder="Task title" />
-              </label>
-
-              <label class="EventComposer__field">
-                <select v-model="editForm.status">
-                  <option value="todo">To Do</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
-              </label>
-
-              <label class="EventComposer__field">
-                <select v-model="editForm.priority">
-                  <option value="low">Low priority</option>
-                  <option value="medium">Medium priority</option>
-                  <option value="high">High priority</option>
-                </select>
-              </label>
-
-              <label class="EventComposer__field">
-                <textarea v-model="editForm.description" rows="5" placeholder="Task description"></textarea>
-              </label>
-
-              <div class="CalendarDetails__actions">
-                <button class="CalendarDetails__editBtn" type="button" :disabled="isSaving" @click="updateSelectedTask">
-                  {{ isSaving ? 'Saving…' : 'Save' }}
-                </button>
-                <button class="CalendarDetails__deleteBtn" type="button" :disabled="isSaving" @click="removeSelectedTask">
-                  Delete
-                </button>
-              </div>
-            </template>
-
-            <template v-else>
-              <span class="CalendarDetails__eyebrow">Nothing selected</span>
-              <h2>Pick a task</h2>
-              <p>Select any card to edit it, or drag it into another column.</p>
-            </template>
-          </div>
-        </aside>
       </div>
     </section>
   </AppShell>

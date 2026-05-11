@@ -4,6 +4,7 @@ import authRoutes from "./routes/authRoutes";
 import taskRoutes from "./routes/taskRoutes";
 import noteRoutes from "./routes/noteRoutes";
 import budgetEntryRoutes from "./routes/budgetEntryRoutes";
+import budgetRowDefRoutes from "./routes/budgetRowDefRoutes";
 
 const router: Router = Router();
 
@@ -386,6 +387,109 @@ router.use("/notes", noteRoutes);
  *         description: Missing/invalid token
  */
 router.use("/budget-entries", budgetEntryRoutes);
+
+/**
+ * @swagger
+ * /budget-row-defs:
+ *   get:
+ *     tags: [Budget]
+ *     summary: Get all budget row definitions
+ *     description: Returns the user's budget row labels (income, fixed, variable, savings), optionally filtered by owner or type.
+ *     parameters:
+ *       - in: query
+ *         name: owner
+ *         schema:
+ *           type: string
+ *         description: Filter by owner user id
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [income, fixed, variable, savings]
+ *         description: Filter by row type
+ *     responses:
+ *       200:
+ *         description: List of budget row definitions
+ *
+ *   post:
+ *     tags: [Budget]
+ *     summary: Create a budget row definition
+ *     description: Add a new labelled row to a budget section (requires login).
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/BudgetRowDef"
+ *           example:
+ *             label: "Main salary"
+ *             type: "income"
+ *             owner: "test-user-1"
+ *     responses:
+ *       201:
+ *         description: Budget row definition created
+ *       400:
+ *         description: Validation error (label, type, or owner missing/invalid)
+ *       401:
+ *         description: Missing/invalid token
+ */
+
+/**
+ * @swagger
+ * /budget-row-defs/{id}:
+ *   put:
+ *     tags: [Budget]
+ *     summary: Update a budget row definition
+ *     description: Rename a row label or change its type (requires login).
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Budget row definition id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/BudgetRowDef"
+ *     responses:
+ *       200:
+ *         description: Budget row definition updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Missing/invalid token
+ *       404:
+ *         description: Budget row definition not found
+ *
+ *   delete:
+ *     tags: [Budget]
+ *     summary: Delete a budget row definition
+ *     description: Remove a row from a budget section (requires login).
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Budget row definition id
+ *     responses:
+ *       200:
+ *         description: Budget row definition deleted
+ *       401:
+ *         description: Missing/invalid token
+ *       404:
+ *         description: Budget row definition not found
+ */
+router.use("/budget-row-defs", budgetRowDefRoutes);
 
 /**
  * @swagger

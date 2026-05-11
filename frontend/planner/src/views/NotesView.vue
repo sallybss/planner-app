@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import AppShell from '../components/AppShell.vue'
 import { useAuth } from '../auth'
 
@@ -20,7 +20,8 @@ type NoteCard = {
 }
 
 const notes = ref<NoteCard[]>([])
-const selectedNoteId = ref<string | null>(null)
+const editingNoteId = ref<string | null>(null)
+const isAddingNote = ref(false)
 const isLoading = ref(false)
 const isSaving = ref(false)
 const pageError = ref('')
@@ -33,7 +34,7 @@ const noteForm = reactive({
   tone: 'charcoal' as NoteTone,
 })
 
-const editForm = reactive({
+const inlineEditForm = reactive({
   title: '',
   content: '',
   tone: 'charcoal' as NoteTone,
@@ -62,30 +63,66 @@ const filteredNotes = computed(() => {
   )
 })
 
-const selectedNote = computed(
-  () => notes.value.find((note) => note.id === selectedNoteId.value || note._id === selectedNoteId.value) ?? null,
-)
+function formatDate(value?: string) {
+  if (!value) return ''
+  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
-function formatTimestamp(value?: string) {
-  if (!value) return 'No date'
-  return new Date(value).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+function formatTime(value?: string) {
+  if (!value) return ''
+  return new Date(value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
+function syncInlineEditForm(note: NoteCard) {
+  inlineEditForm.title = note.title
+  inlineEditForm.content = note.content
+  inlineEditForm.tone = note.tone ?? 'charcoal'
+}
+
+function isEditingNote(note: NoteCard) {
+  const noteId = note.id ?? note._id ?? null
+  return editingNoteId.value === noteId
+}
+
+function startEditNote(note: NoteCard, focus: 'title' | 'content' = 'title') {
+  const noteId = note.id ?? note._id ?? null
+  editingNoteId.value = noteId
+  syncInlineEditForm(note)
+  nextTick(() => {
+    const baseSelector = `.NoteCard[data-note-id="${noteId}"]`
+
+    if (focus === 'content') {
+      const contentInput = document.querySelector<HTMLTextAreaElement>(`${baseSelector} .NoteCard__contentInput`)
+      contentInput?.focus()
+      return
+    }
+
+    const titleInput = document.querySelector<HTMLInputElement>(`${baseSelector} .NoteCard__titleInput`)
+    titleInput?.focus()
+    titleInput?.select()
   })
 }
 
-function syncEditForm(note: NoteCard) {
-  editForm.title = note.title
-  editForm.content = note.content
-  editForm.tone = note.tone ?? 'charcoal'
+function cancelInlineEdit() {
+  editingNoteId.value = null
 }
 
-function selectNote(note: NoteCard) {
-  selectedNoteId.value = note.id ?? null
-  syncEditForm(note)
+function startAddNote() {
+  isAddingNote.value = true
+  noteForm.title = ''
+  noteForm.content = ''
+  noteForm.tone = 'charcoal'
+  nextTick(() => {
+    const input = document.querySelector<HTMLInputElement>('.NoteCreateCard__titleInput')
+    input?.focus()
+  })
+}
+
+function cancelAddNote() {
+  isAddingNote.value = false
+  noteForm.title = ''
+  noteForm.content = ''
+  noteForm.tone = 'charcoal'
 }
 
 async function parseResponseError(response: Response, fallback: string) {
@@ -161,10 +198,7 @@ async function submitNote() {
 
     const created = normalizeNote((await response.json()) as NoteCard)
     notes.value = [created, ...notes.value]
-    noteForm.title = ''
-    noteForm.content = ''
-    noteForm.tone = 'charcoal'
-    selectNote(created)
+    cancelAddNote()
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to create note.'
   } finally {
@@ -197,28 +231,29 @@ async function saveNote(note: NoteCard, updates: Partial<NoteCard>) {
   return normalizeNote((await response.json()) as NoteCard)
 }
 
-async function updateSelectedNote() {
-  if (!selectedNote.value) return
-
-  if (!editForm.title.trim() || !editForm.content.trim()) {
+async function saveInlineNote(note: NoteCard) {
+  if (!inlineEditForm.title.trim() || !inlineEditForm.content.trim()) {
     pageError.value = 'Note title and content are required.'
     return
   }
+
+  const noteId = note.id ?? note._id ?? null
+  if (!noteId) return
 
   isSaving.value = true
   pageError.value = ''
 
   try {
-    const updated = await saveNote(selectedNote.value, {
-      title: editForm.title.trim(),
-      content: editForm.content.trim(),
-      tone: editForm.tone,
+    const updated = await saveNote(note, {
+      title: inlineEditForm.title.trim(),
+      content: inlineEditForm.content.trim(),
+      tone: inlineEditForm.tone,
     })
 
     if (!updated) return
 
     notes.value = notes.value.map((note) => (note.id === updated.id ? updated : note))
-    selectNote(updated)
+    editingNoteId.value = null
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to save note.'
   } finally {
@@ -226,11 +261,12 @@ async function updateSelectedNote() {
   }
 }
 
-async function removeSelectedNote() {
-  if (!selectedNote.value || !user.value?.token) return
+async function removeNote(note: NoteCard) {
+  if (!user.value?.token) return
 
-  const id = selectedNote.value.id ?? selectedNote.value._id
+  const id = note.id ?? note._id
   if (!id) return
+  if (!confirm(`Delete note "${note.title}"?`)) return
 
   isSaving.value = true
   pageError.value = ''
@@ -248,7 +284,9 @@ async function removeSelectedNote() {
     }
 
     notes.value = notes.value.filter((note) => note.id !== id)
-    selectedNoteId.value = null
+    if (editingNoteId.value === id) {
+      editingNoteId.value = null
+    }
   } catch (error) {
     pageError.value = error instanceof Error ? error.message : 'Unable to delete note.'
   } finally {
@@ -279,6 +317,12 @@ onMounted(() => {
         </div>
 
         <label class="CalendarFilter NotesSearch">
+          <span class="NotesSearch__icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.4" />
+              <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </span>
           <input v-model="search" type="text" placeholder="Search notes" @input="loadNotes" />
         </label>
       </div>
@@ -286,90 +330,128 @@ onMounted(() => {
       <p v-if="pageError" class="CalendarBoard__message CalendarBoard__message--error">{{ pageError }}</p>
       <p v-else-if="isLoading" class="CalendarBoard__message">Loading notes...</p>
 
-      <div class="NotesLayout">
-        <div class="NotesGrid">
-          <button
+      <div class="NotesGrid">
+          <template v-if="isAddingNote">
+            <form class="NoteCreateCard" @submit.prevent="submitNote">
+              <div class="NoteCreateCard__header">
+                <span class="NoteCreateCard__eyebrow">New note</span>
+                <label class="NoteCreateCard__toneField">
+                  <select v-model="noteForm.tone" class="NoteCreateCard__toneSelect">
+                    <option v-for="tone in toneOptions" :key="tone.value" :value="tone.value">{{ tone.label }}</option>
+                  </select>
+                </label>
+              </div>
+
+              <input
+                v-model="noteForm.title"
+                class="NoteCreateCard__titleInput"
+                type="text"
+                placeholder="Note title"
+                @keydown.esc="cancelAddNote"
+              />
+
+              <textarea
+                v-model="noteForm.content"
+                class="NoteCreateCard__contentInput"
+                rows="6"
+                placeholder="Write your note"
+                @keydown.esc="cancelAddNote"
+              />
+
+              <div class="NoteCreateCard__footer">
+                <button class="NoteCreateCard__btn" type="submit" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save' }}
+                </button>
+                <button class="NoteCreateCard__btn NoteCreateCard__btn--ghost" type="button" :disabled="isSaving" @click="cancelAddNote">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </template>
+
+          <button v-else class="NoteAddTile" type="button" @click="startAddNote" aria-label="Add new note">
+            <span class="NoteAddTile__plus">+</span>
+          </button>
+
+          <article
             v-for="note in filteredNotes"
             :key="note.id"
             class="NoteCard"
-            :class="[`NoteCard--${note.tone ?? 'charcoal'}`, { 'NoteCard--active': selectedNoteId === note.id }]"
-            type="button"
-            @click="selectNote(note)"
+            :data-note-id="note.id"
+            :class="[`NoteCard--${note.tone ?? 'charcoal'}`, { 'NoteCard--active': isEditingNote(note) }]"
           >
-            <span class="NoteCard__eyebrow">Note</span>
-            <h2>{{ note.title }}</h2>
-            <p>{{ note.content }}</p>
-            <small class="NoteCard__date">Updated {{ formatTimestamp(note.updatedAt) }}</small>
-          </button>
+            <template v-if="isEditingNote(note)">
+              <div class="NoteCard__surface NoteCard__surface--editing">
+                <div class="NoteCard__editingTop">
+                  <span class="NoteCard__date">{{ formatDate(note.updatedAt) }}</span>
+                  <label class="NoteCard__toneField">
+                    <select v-model="inlineEditForm.tone" class="NoteCard__toneSelect">
+                      <option v-for="tone in toneOptions" :key="tone.value" :value="tone.value">{{ tone.label }}</option>
+                    </select>
+                  </label>
+                </div>
 
-          <div v-if="filteredNotes.length === 0 && !isLoading" class="BoardColumn__empty">
-            No notes yet
-          </div>
-        </div>
+                <input
+                  v-model="inlineEditForm.title"
+                  class="NoteCard__titleInput"
+                  type="text"
+                  placeholder="Note title"
+                  @keydown.enter.prevent="saveInlineNote(note)"
+                  @keydown.esc="cancelInlineEdit"
+                />
 
-        <aside class="CalendarDetails CalendarDetails--panel">
-          <form class="EventComposer EventComposer--panel" @submit.prevent="submitNote">
-            <div class="EventComposer__header">
-              <span>New note</span>
-              <p>Capture ideas, summaries, and quick reminders.</p>
-            </div>
+                <textarea
+                  v-model="inlineEditForm.content"
+                  class="NoteCard__contentInput"
+                  rows="6"
+                  placeholder="Write your note"
+                  @keydown.esc="cancelInlineEdit"
+                />
 
-            <label class="EventComposer__field">
-              <input v-model="noteForm.title" type="text" placeholder="Note title" />
-            </label>
+                <div class="NoteCard__footer">
+                  <div class="NoteCard__timestamp">
+                    <svg class="NoteCard__clock" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/>
+                      <path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ formatTime(note.updatedAt) }}</span>
+                  </div>
 
-            <label class="EventComposer__field">
-              <select v-model="noteForm.tone">
-                <option v-for="tone in toneOptions" :key="tone.value" :value="tone.value">{{ tone.label }}</option>
-              </select>
-            </label>
-
-            <label class="EventComposer__field">
-              <textarea v-model="noteForm.content" rows="6" placeholder="Write your note"></textarea>
-            </label>
-
-            <button class="EventComposer__submit" type="submit" :disabled="isSaving">
-              {{ isSaving ? 'Saving...' : 'Save note' }}
-            </button>
-          </form>
-
-          <div class="CalendarDetails__section">
-            <template v-if="selectedNote">
-              <span class="CalendarDetails__eyebrow">Selected note</span>
-              <h2>Edit note</h2>
-              <p>Refine your writing and keep the workspace updated.</p>
-
-              <label class="EventComposer__field">
-                <input v-model="editForm.title" type="text" placeholder="Note title" />
-              </label>
-
-              <label class="EventComposer__field">
-                <select v-model="editForm.tone">
-                  <option v-for="tone in toneOptions" :key="tone.value" :value="tone.value">{{ tone.label }}</option>
-                </select>
-              </label>
-
-              <label class="EventComposer__field">
-                <textarea v-model="editForm.content" rows="8" placeholder="Write your note"></textarea>
-              </label>
-
-              <div class="CalendarDetails__actions">
-                <button class="CalendarDetails__editBtn" type="button" :disabled="isSaving" @click="updateSelectedNote">
-                  {{ isSaving ? 'Saving…' : 'Save' }}
-                </button>
-                <button class="CalendarDetails__deleteBtn" type="button" :disabled="isSaving" @click="removeSelectedNote">
-                  Delete
-                </button>
+                  <div class="NoteCard__actions NoteCard__actions--editing">
+                    <button class="NoteCard__actionBtn" type="button" :disabled="isSaving" @click="saveInlineNote(note)">
+                      {{ isSaving ? 'Saving...' : 'Save' }}
+                    </button>
+                    <button class="NoteCard__actionBtn" type="button" :disabled="isSaving" @click="cancelInlineEdit">Cancel</button>
+                    <button class="NoteCard__actionBtn NoteCard__actionBtn--delete" type="button" :disabled="isSaving" @click="removeNote(note)">Delete</button>
+                  </div>
+                </div>
               </div>
             </template>
 
             <template v-else>
-              <span class="CalendarDetails__eyebrow">Nothing selected</span>
-              <h2>Pick a note</h2>
-              <p>Select any note card to edit it here.</p>
+              <div class="NoteCard__actions">
+                <button class="NoteCard__actionBtn" type="button" @click.stop="startEditNote(note)">Edit</button>
+                <button class="NoteCard__actionBtn NoteCard__actionBtn--delete" type="button" @click.stop="removeNote(note)">Delete</button>
+              </div>
+
+              <div class="NoteCard__surface">
+                <span class="NoteCard__date">{{ formatDate(note.updatedAt) }}</span>
+                <button class="NoteCard__titleButton" type="button" @click="startEditNote(note, 'title')">{{ note.title }}</button>
+                <button class="NoteCard__contentButton" type="button" @click="startEditNote(note, 'content')">{{ note.content }}</button>
+                <div class="NoteCard__footer">
+                  <svg class="NoteCard__clock" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/>
+                    <path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                  </svg>
+                  <span>{{ formatTime(note.updatedAt) }}</span>
+                </div>
+              </div>
             </template>
+          </article>
+
+          <div v-if="filteredNotes.length === 0 && !isLoading" class="BoardColumn__empty">
+            No notes yet
           </div>
-        </aside>
       </div>
     </section>
   </AppShell>

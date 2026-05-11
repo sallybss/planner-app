@@ -100,7 +100,7 @@ export async function updateBudgetEntryById(req: Request, res: Response) {
     await connect();
 
     const update = pickBudgetEntryBody(req.body);
-    const result = await budgetEntryModel.findByIdAndUpdate(req.params.id, update, { new: true });
+    const result = await budgetEntryModel.findByIdAndUpdate(req.params.id, update, { returnDocument: 'after' });
     if (!result) {
       res.status(404).send("Cannot update budget entry with id=" + req.params.id);
       return;

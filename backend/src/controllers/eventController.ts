@@ -119,7 +119,7 @@ export async function updateEventById(req: Request, res: Response) {
     await connect();
 
     const update = pickEventBody(req.body);
-    const result = await eventModel.findByIdAndUpdate(id, update, { new: true });
+    const result = await eventModel.findByIdAndUpdate(id, update, { returnDocument: 'after' });
 
     if (!result) res.status(404).send("Cannot update event with id=" + id);
     else res.status(200).send(result);

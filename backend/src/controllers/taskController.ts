@@ -88,7 +88,7 @@ export async function updateTaskById(req: Request, res: Response) {
     await connect();
 
     const update = pickTaskBody(req.body);
-    const result = await taskModel.findByIdAndUpdate(req.params.id, update, { new: true });
+    const result = await taskModel.findByIdAndUpdate(req.params.id, update, { returnDocument: 'after' });
 
     if (!result) {
       res.status(404).send("Cannot update task with id=" + req.params.id);
