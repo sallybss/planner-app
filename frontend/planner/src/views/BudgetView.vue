@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, nextTick } from 'vue'
+import { computed, onMounted, reactive, ref, nextTick, watch } from 'vue'
 import AppShell from '../components/AppShell.vue'
 import { useAuth } from '../auth'
 
@@ -8,6 +8,7 @@ const { user } = useAuth()
 
 type BudgetType = 'income' | 'fixed' | 'variable' | 'savings'
 type SectionKey = 'income' | 'fixed' | 'variable' | 'savings'
+type CurrencyCode = 'DKK' | 'EUR'
 
 type BudgetEntry = {
   _id?: string
@@ -28,10 +29,18 @@ const MONTH_LABELS = [
 ]
 
 const YEAR_RANGE = Array.from({ length: 8 }, (_, i) => 2022 + i)
+const CURRENCY_STORAGE_KEY = 'plannerBudgetCurrency'
+const BASE_BUDGET_CURRENCY: CurrencyCode = 'DKK'
+const ECB_EUR_TO_DKK_RATE = 7.4726
+const currencyMeta: Record<CurrencyCode, { locale: string; symbol: string }> = {
+  DKK: { locale: 'da-DK', symbol: 'kr.' },
+  EUR: { locale: 'de-DE', symbol: 'EUR' },
+}
 
 const selectedYear = ref(new Date().getFullYear())
 const viewMode = ref<'year' | 'month'>('year')
 const selectedMonthIndex = ref(new Date().getMonth())
+const selectedCurrency = ref<CurrencyCode>('DKK')
 
 const MONTHS = computed(() =>
   MONTH_LABELS.map((short, i) => ({
@@ -179,16 +188,306 @@ const summaryStat = computed(() => {
   return { label: `${selectedYear.value} annual`, ...annualSummary.value }
 })
 
+const exportLabel = computed(() =>
+  viewMode.value === 'month'
+    ? `${MONTHS.value[selectedMonthIndex.value]?.short ?? ''} ${selectedYear.value}`
+    : `${selectedYear.value} annual overview`,
+)
+
 function fmt(value: number, dash = true): string {
   if (dash && value === 0) return '—'
+  const { locale, symbol } = currencyMeta[selectedCurrency.value]
   return (
-    new Intl.NumberFormat('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value) + ' kr.'
+    new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(convertFromStorage(value)) + ` ${symbol}`
   )
+}
+
+function setCurrency(currency: CurrencyCode) {
+  selectedCurrency.value = currency
+  window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency)
+}
+
+function convertFromStorage(value: number): number {
+  if (selectedCurrency.value === BASE_BUDGET_CURRENCY) return value
+  return value / ECB_EUR_TO_DKK_RATE
+}
+
+function convertToStorage(value: number): number {
+  if (selectedCurrency.value === BASE_BUDGET_CURRENCY) return value
+  return value * ECB_EUR_TO_DKK_RATE
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function renderExportRows(rows: RowDef[], title: string, totalLabel: string, totalKey: 'income' | 'fixed' | 'variable' | 'savings' | 'expenses' | 'net') {
+  const headerCells = displayMonths.value
+    .map((month) => `<th>${escapeHtml(month.short)}</th>`)
+    .join('')
+
+  const bodyRows = rows
+    .map((row) => {
+      const valueCells = displayMonths.value
+        .map((month) => `<td>${escapeHtml(fmt(getAmount(row.label, month.key)))}</td>`)
+        .join('')
+      return `<tr><td>${escapeHtml(row.label)}</td>${valueCells}</tr>`
+    })
+    .join('')
+
+  const totalCells = displayMonths.value
+    .map((month) => `<td>${escapeHtml(fmt(totalsFor(month.key)[totalKey], false))}</td>`)
+    .join('')
+
+  return `
+    <section class="BudgetExport__section">
+      <h2>${escapeHtml(title)}</h2>
+      <table class="BudgetExport__table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            ${headerCells}
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows}
+          <tr class="BudgetExport__totalRow">
+            <td>${escapeHtml(totalLabel)}</td>
+            ${totalCells}
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  `
+}
+
+function downloadBudgetOverview() {
+  const generatedAt = new Date().toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  const html = `
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Budget overview - ${escapeHtml(exportLabel.value)}</title>
+        <style>
+          :root {
+            color-scheme: light;
+            --ink: #1c1730;
+            --muted: #6d6788;
+            --line: #d9d4ea;
+            --panel: #f6f3ff;
+            --panel-strong: #ece6ff;
+            --accent: #6b5bd2;
+            --danger: #a94d66;
+            --mint: #2f8f68;
+          }
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            padding: 32px;
+            font-family: Inter, "Segoe UI", sans-serif;
+            color: var(--ink);
+            background: #ffffff;
+          }
+          .BudgetExport {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 24px;
+          }
+          .BudgetExport__hero {
+            padding: 24px 28px;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: linear-gradient(135deg, var(--panel), #fff 70%);
+          }
+          .BudgetExport__eyebrow {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+          }
+          .BudgetExport__hero h1 {
+            margin: 0;
+            font-size: 34px;
+            line-height: 1.1;
+          }
+          .BudgetExport__heroMeta {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 14px;
+          }
+          .BudgetExport__stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+          }
+          .BudgetExport__stat {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+          }
+          .BudgetExport__stat span {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 13px;
+          }
+          .BudgetExport__stat strong {
+            font-size: 22px;
+            line-height: 1.2;
+          }
+          .BudgetExport__section {
+            display: grid;
+            gap: 12px;
+          }
+          .BudgetExport__section h2 {
+            margin: 0;
+            font-size: 20px;
+          }
+          .BudgetExport__table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+          }
+          .BudgetExport__table th,
+          .BudgetExport__table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--line);
+            text-align: right;
+            font-size: 14px;
+            vertical-align: top;
+          }
+          .BudgetExport__table th:first-child,
+          .BudgetExport__table td:first-child {
+            width: 28%;
+            text-align: left;
+            font-weight: 600;
+          }
+          .BudgetExport__table thead th {
+            background: var(--panel);
+          }
+          .BudgetExport__totalRow td {
+            background: var(--panel-strong);
+            font-weight: 700;
+          }
+          .BudgetExport__footnote {
+            color: var(--muted);
+            font-size: 12px;
+          }
+          @media print {
+            body { padding: 16px; }
+            .BudgetExport { gap: 18px; }
+          }
+        </style>
+      </head>
+      <body onload="window.print()">
+        <main class="BudgetExport">
+          <section class="BudgetExport__hero">
+            <p class="BudgetExport__eyebrow">Planix budget export</p>
+            <h1>${escapeHtml(exportLabel.value)}</h1>
+            <div class="BudgetExport__heroMeta">
+              Currency: ${escapeHtml(selectedCurrency.value)} · Generated ${escapeHtml(generatedAt)}
+            </div>
+          </section>
+
+          <section class="BudgetExport__stats">
+            <article class="BudgetExport__stat">
+              <span>Total income</span>
+              <strong>${escapeHtml(fmt(summaryStat.value.income, false))}</strong>
+            </article>
+            <article class="BudgetExport__stat">
+              <span>Total expenses</span>
+              <strong>${escapeHtml(fmt(summaryStat.value.expenses, false))}</strong>
+            </article>
+            <article class="BudgetExport__stat">
+              <span>Total savings</span>
+              <strong>${escapeHtml(fmt(summaryStat.value.savings, false))}</strong>
+            </article>
+            <article class="BudgetExport__stat">
+              <span>Net / Loss</span>
+              <strong>${escapeHtml(fmt(summaryStat.value.net, false))}</strong>
+            </article>
+          </section>
+
+          ${renderExportRows(rowDefs.income, 'Net income', 'Total income', 'income')}
+          ${renderExportRows(rowDefs.fixed, 'Fixed expenses', 'Total fixed', 'fixed')}
+          ${renderExportRows(rowDefs.variable, 'Variable expenses', 'Total variable', 'variable')}
+          ${renderExportRows(rowDefs.savings, 'Savings', 'Total savings', 'savings')}
+
+          <section class="BudgetExport__section">
+            <h2>Overall totals</h2>
+            <table class="BudgetExport__table">
+              <thead>
+                <tr>
+                  <th>Summary</th>
+                  ${displayMonths.value.map((month) => `<th>${escapeHtml(month.short)}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Monthly expenses</td>
+                  ${displayMonths.value.map((month) => `<td>${escapeHtml(fmt(totalsFor(month.key).expenses, false))}</td>`).join('')}
+                </tr>
+                <tr class="BudgetExport__totalRow">
+                  <td>Net / Loss</td>
+                  ${displayMonths.value.map((month) => `<td>${escapeHtml(fmt(totalsFor(month.key).net, false))}</td>`).join('')}
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <p class="BudgetExport__footnote">
+            If you choose “Save as PDF” in the print dialog, this overview will be downloaded as a PDF document.
+          </p>
+        </main>
+      </body>
+    </html>
+  `
+
+  const htmlBlob = new Blob([html], { type: 'text/html' })
+  const htmlUrl = URL.createObjectURL(htmlBlob)
+  const printWindow = window.open(htmlUrl, '_blank', 'width=1100,height=800')
+
+  if (!printWindow) {
+    URL.revokeObjectURL(htmlUrl)
+    pageError.value = 'Unable to open the overview. Please allow pop-ups and try again.'
+    return
+  }
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(htmlUrl)
+  }, 15000)
 }
 
 // ── cell selection ────────────────────────────────────────
 const selectedCell = ref<{ label: string; month: string } | null>(null)
 const cellAmount = ref('')
+
+function syncSelectedCellAmount() {
+  if (!selectedCell.value) return
+  const existing = getEntry(selectedCell.value.label, selectedCell.value.month)
+  cellAmount.value = existing ? String(Number(convertFromStorage(existing.amount).toFixed(2))) : ''
+}
 
 function isCellSelected(label: string, month: string) {
   return selectedCell.value?.label === label && selectedCell.value?.month === month
@@ -197,8 +496,7 @@ function isCellSelected(label: string, month: string) {
 async function selectCell(row: RowDef, monthKey: string) {
   editingRowLabel.value = null
   selectedCell.value = { label: row.label, month: monthKey }
-  const existing = getEntry(row.label, monthKey)
-  cellAmount.value = existing ? String(existing.amount) : ''
+  syncSelectedCellAmount()
   await nextTick()
   const input = document.querySelector<HTMLInputElement>('.SpreadsheetTable__cell--selected .SpreadsheetTable__cellInput')
   input?.focus()
@@ -355,11 +653,12 @@ async function loadEntries() {
 async function saveCellAmount() {
   if (!selectedCell.value || !user.value?.id || !user.value.token) return
 
-  const amount = Number(cellAmount.value)
-  if (!Number.isFinite(amount) || amount < 0) {
+  const displayAmount = Number(cellAmount.value)
+  if (!Number.isFinite(displayAmount) || displayAmount < 0) {
     pageError.value = 'Enter a valid amount.'
     return
   }
+  const amount = Number(convertToStorage(displayAmount).toFixed(2))
 
   isSaving.value = true
   pageError.value = ''
@@ -422,8 +721,16 @@ async function deleteCellEntry() {
 }
 
 onMounted(() => {
+  const storedCurrency = window.localStorage.getItem(CURRENCY_STORAGE_KEY)
+  if (storedCurrency === 'DKK' || storedCurrency === 'EUR') {
+    selectedCurrency.value = storedCurrency
+  }
   void loadRowDefs()
   void loadEntries()
+})
+
+watch(selectedCurrency, () => {
+  syncSelectedCellAmount()
 })
 </script>
 
@@ -465,6 +772,16 @@ onMounted(() => {
             :style="{ width: `calc(${(MONTHS[selectedMonthIndex]?.short ?? '').length}ch + 32px)` }">
             <option v-for="(m, i) in MONTHS" :key="m.key" :value="i">{{ m.short }}</option>
           </select>
+          <select
+            :value="selectedCurrency"
+            class="BudgetControls__select"
+            aria-label="Budget currency"
+            @change="setCurrency(($event.target as HTMLSelectElement).value as CurrencyCode)"
+          >
+            <option value="DKK">DKK</option>
+            <option value="EUR">EUR</option>
+          </select>
+          <button class="BudgetControls__exportBtn" type="button" @click="downloadBudgetOverview">Download overview</button>
         </div>
       </div>
 
@@ -807,7 +1124,7 @@ onMounted(() => {
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="Amount in kr."
+                :placeholder="`Amount in ${selectedCurrency}`"
                 @keydown.enter.prevent="saveCellAmount"
               />
             </label>

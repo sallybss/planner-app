@@ -37,6 +37,8 @@ function handleLogout() {
         <span>Personal workspace</span>
       </div>
 
+      <slot name="sidebar-top" />
+
       <nav class="CalendarSidebar__nav">
         <RouterLink
           v-for="section in sections"

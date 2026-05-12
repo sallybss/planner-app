@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef } from 'vue'
 import AppShell from '../components/AppShell.vue'
 import { useAuth } from '../auth'
 
@@ -13,6 +13,7 @@ const firstVisibleHour = 1
 const lastVisibleHour = 23
 const headerViewport = useTemplateRef<HTMLDivElement>('headerViewport')
 const bodyViewport = useTemplateRef<HTMLDivElement>('bodyViewport')
+const createTitleInput = useTemplateRef<HTMLInputElement>('createTitleInput')
 const bodyScrollTop = ref(0)
 const bodyScrollLeft = ref(0)
 
@@ -31,6 +32,14 @@ type CalendarEvent = {
 
 const events = ref<CalendarEvent[]>([])
 const selectedEventId = ref<string | null>(null)
+const draggedEventId = ref<string | null>(null)
+const resizeState = ref<{
+  eventId: string
+  startY: number
+  startMinutes: number
+  originalEndMinutes: number
+  previewEndMinutes: number
+} | null>(null)
 const isLoading = ref(false)
 const isSaving = ref(false)
 const pageError = ref('')
@@ -274,6 +283,29 @@ const filteredEvents = computed(() => {
   })
 })
 
+function getRenderedEventTimes(event: CalendarEvent) {
+  const startTime = event.startTime ?? '09:00'
+  const startMinutes = getMinutesFromTime(startTime)
+  const defaultEndMinutes = Math.max(startMinutes + 30, getMinutesFromTime(event.endTime ?? '10:00'))
+  const eventId = event.id ?? event._id ?? null
+
+  if (resizeState.value && resizeState.value.eventId === eventId) {
+    return {
+      startTime,
+      endTime: formatMinutesAsTime(resizeState.value.previewEndMinutes),
+      startMinutes,
+      endMinutes: resizeState.value.previewEndMinutes,
+    }
+  }
+
+  return {
+    startTime,
+    endTime: formatMinutesAsTime(defaultEndMinutes),
+    startMinutes,
+    endMinutes: defaultEndMinutes,
+  }
+}
+
 const calendarEvents = computed(() =>
   filteredEvents.value
     .map((event) => {
@@ -283,13 +315,10 @@ const calendarEvents = computed(() =>
 
       if (dayIndex === -1) return null
 
-      const startTime = event.startTime ?? '09:00'
-      const endTime = event.endTime ?? '10:00'
+      const { startTime, endTime, startMinutes: rawStartMinutes, endMinutes } = getRenderedEventTimes(event)
       const firstHour = timeSlots[0] ?? firstVisibleHour
       const firstVisibleMinute = firstHour * 60
-      const startMinutes = Math.max(getMinutesFromTime(startTime), firstVisibleMinute)
-      const rawEndMinutes = getMinutesFromTime(endTime)
-      const endMinutes = Math.max(startMinutes + 30, rawEndMinutes)
+      const startMinutes = Math.max(rawStartMinutes, firstVisibleMinute)
       const minutesFromTop = startMinutes - firstVisibleMinute
       const durationMinutes = Math.max(30, endMinutes - startMinutes)
       const top = (minutesFromTop / 60) * rowHeight + 6
@@ -341,13 +370,33 @@ function normalizeEvent(event: CalendarEvent) {
   }
 }
 
+function getEventDurationMinutes(event: CalendarEvent) {
+  const startTime = event.startTime ?? '09:00'
+  const endTime = event.endTime ?? '10:00'
+  return Math.max(30, getMinutesFromTime(endTime) - getMinutesFromTime(startTime))
+}
+
+function formatMinutesAsTime(totalMinutes: number) {
+  const safeMinutes = Math.max(0, Math.min(totalMinutes, 23 * 60 + 59))
+  const hour = Math.floor(safeMinutes / 60)
+  const minute = safeMinutes % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
 async function loadEvents() {
-  if (!user.value?.id) return
+  if (!user.value?.id || !user.value?.token) return
   isLoading.value = true
   pageError.value = ''
   try {
-    const response = await fetch(`${API_BASE_URL}/events?owner=${encodeURIComponent(user.value.id)}`)
-    if (!response.ok) throw new Error('Unable to load events.')
+    const response = await fetch(`${API_BASE_URL}/events?owner=${encodeURIComponent(user.value.id)}`, {
+      headers: {
+        Authorization: `Bearer ${user.value.token}`,
+      },
+    })
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(message || 'Unable to load events.')
+    }
     const payload = (await response.json()) as CalendarEvent[]
     events.value = payload.map(normalizeEvent)
   } catch (error) {
@@ -356,6 +405,28 @@ async function loadEvents() {
   } finally {
     isLoading.value = false
   }
+}
+
+async function saveEventUpdate(event: CalendarEvent, updates: Partial<CalendarEvent>) {
+  if (!user.value?.token) {
+    pageError.value = 'You must be logged in to update events.'
+    return null
+  }
+
+  const id = event._id ?? event.id
+  if (!id) return null
+
+  const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${user.value.token}`,
+    },
+    body: JSON.stringify(updates),
+  })
+
+  if (!response.ok) throw new Error(await response.text())
+  return normalizeEvent((await response.json()) as CalendarEvent)
 }
 
 async function submitEvent() {
@@ -408,6 +479,17 @@ async function submitEvent() {
   }
 }
 
+function prepareEventFormForSlot(dayKey: string, hour: number) {
+  selectedEventId.value = null
+  isEditing.value = false
+  eventForm.date = dayKey
+  eventForm.startTime = `${String(hour).padStart(2, '0')}:00`
+  eventForm.endTime = hour >= 23 ? '23:59' : `${String(hour + 1).padStart(2, '0')}:00`
+  nextTick(() => {
+    createTitleInput.value?.focus()
+  })
+}
+
 function startEditing() {
   if (!selectedEvent.value) return
   Object.assign(editForm, {
@@ -427,20 +509,11 @@ async function saveEdit() {
   isSaving.value = true
   pageError.value = ''
   try {
-    const id = selectedEvent.value._id ?? selectedEvent.value.id
-    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${user.value.token}`,
-      },
-      body: JSON.stringify({
-        ...editForm,
-        date: new Date(`${editForm.date}T00:00:00`).toISOString(),
-      }),
+    const updated = await saveEventUpdate(selectedEvent.value, {
+      ...editForm,
+      date: new Date(`${editForm.date}T00:00:00`).toISOString(),
     })
-    if (!response.ok) throw new Error(await response.text())
-    const updated = normalizeEvent((await response.json()) as CalendarEvent)
+    if (!updated) return
     events.value = events.value.map((e) => (e.id === updated.id ? updated : e))
     isEditing.value = false
   } catch (error) {
@@ -473,6 +546,131 @@ function goToCurrentWeek() {
   void focusCalendarOnToday()
 }
 
+function handleEventDragStart(event: CalendarEvent) {
+  draggedEventId.value = event.id ?? event._id ?? null
+}
+
+function handleEventDragEnd() {
+  draggedEventId.value = null
+}
+
+function isResizingEvent(event: CalendarEvent) {
+  const eventId = event.id ?? event._id ?? null
+  return resizeState.value?.eventId === eventId
+}
+
+function removeResizeListeners() {
+  window.removeEventListener('mousemove', handleResizeMouseMove)
+  window.removeEventListener('mouseup', handleResizeMouseUp)
+}
+
+function handleResizeMouseMove(pointerEvent: MouseEvent) {
+  if (!resizeState.value) return
+  const stepHeight = rowHeight / 2
+  const rawSteps = Math.round((pointerEvent.clientY - resizeState.value.startY) / stepHeight)
+  const deltaMinutes = rawSteps * 30
+  const minEndMinutes = resizeState.value.startMinutes + 30
+  const maxEndMinutes = 23 * 60 + 59
+
+  resizeState.value.previewEndMinutes = Math.max(
+    minEndMinutes,
+    Math.min(maxEndMinutes, resizeState.value.originalEndMinutes + deltaMinutes),
+  )
+}
+
+function handleResizeMouseUp() {
+  if (!resizeState.value) return
+
+  const resizeSnapshot = { ...resizeState.value }
+  resizeState.value = null
+  removeResizeListeners()
+
+  if (resizeSnapshot.previewEndMinutes === resizeSnapshot.originalEndMinutes) return
+
+  const event = events.value.find(
+    (item) => item.id === resizeSnapshot.eventId || item._id === resizeSnapshot.eventId,
+  )
+  if (!event) return
+
+  isSaving.value = true
+  pageError.value = ''
+
+  void saveEventUpdate(event, {
+    endTime: formatMinutesAsTime(resizeSnapshot.previewEndMinutes),
+  })
+    .then((updated) => {
+      if (!updated) return
+      events.value = events.value.map((item) => (item.id === updated.id ? updated : item))
+      selectedEventId.value = updated.id ?? null
+      if (isEditing.value && selectedEventId.value === updated.id) {
+        startEditing()
+      }
+    })
+    .catch((error: unknown) => {
+      pageError.value = error instanceof Error ? error.message : 'Unable to resize event.'
+    })
+    .finally(() => {
+      isSaving.value = false
+    })
+}
+
+function startResizeEvent(event: CalendarEvent, pointerEvent: MouseEvent) {
+  pointerEvent.preventDefault()
+  pointerEvent.stopPropagation()
+
+  const eventId = event.id ?? event._id ?? null
+  if (!eventId) return
+
+  const startTime = event.startTime ?? '09:00'
+  const startMinutes = getMinutesFromTime(startTime)
+  const originalEndMinutes = Math.max(startMinutes + 30, getMinutesFromTime(event.endTime ?? '10:00'))
+
+  resizeState.value = {
+    eventId,
+    startY: pointerEvent.clientY,
+    startMinutes,
+    originalEndMinutes,
+    previewEndMinutes: originalEndMinutes,
+  }
+
+  removeResizeListeners()
+  window.addEventListener('mousemove', handleResizeMouseMove)
+  window.addEventListener('mouseup', handleResizeMouseUp)
+}
+
+async function moveEventToSlot(dayKey: string, hour: number) {
+  if (!draggedEventId.value) return
+  const event = events.value.find((item) => item.id === draggedEventId.value || item._id === draggedEventId.value)
+  if (!event) return
+
+  const durationMinutes = getEventDurationMinutes(event)
+  const startMinutes = hour * 60
+  const endMinutes = Math.min(startMinutes + durationMinutes, 23 * 60 + 59)
+  const updates = {
+    date: new Date(`${dayKey}T00:00:00`).toISOString(),
+    startTime: formatMinutesAsTime(startMinutes),
+    endTime: formatMinutesAsTime(endMinutes),
+  }
+
+  isSaving.value = true
+  pageError.value = ''
+
+  try {
+    const updated = await saveEventUpdate(event, updates)
+    if (!updated) return
+    events.value = events.value.map((item) => (item.id === updated.id ? updated : item))
+    selectedEventId.value = updated.id ?? null
+    if (isEditing.value && selectedEventId.value === updated.id) {
+      startEditing()
+    }
+  } catch (error) {
+    pageError.value = error instanceof Error ? error.message : 'Unable to move event.'
+  } finally {
+    isSaving.value = false
+    draggedEventId.value = null
+  }
+}
+
 function syncHeaderScroll() {
   if (!headerViewport.value || !bodyViewport.value) return
   headerViewport.value.scrollLeft = bodyViewport.value.scrollLeft
@@ -503,11 +701,15 @@ onMounted(() => {
   void loadEvents()
   void focusCalendarOnToday()
 })
+
+onBeforeUnmount(() => {
+  removeResizeListeners()
+})
 </script>
 
 <template>
   <AppShell active-section="calendar" eyebrow="Weekly calendar" :title="currentMonthLabel">
-    <template #sidebar>
+    <template #sidebar-top>
       <section class="CalendarMini">
         <div class="CalendarMini__header">
           <button type="button" class="CalendarMini__nav" @click="goToPreviousMonth" aria-label="Previous month">
@@ -542,7 +744,9 @@ onMounted(() => {
           </span>
         </div>
       </section>
+    </template>
 
+    <template #sidebar>
       <section class="CalendarSidebar__summary">
         <span>Overview</span>
         <p>{{ eventsThisYearCount }} events this year</p>
@@ -599,6 +803,9 @@ onMounted(() => {
                       :key="`${day.key}-${hour}`"
                       class="CalendarGrid__slot"
                       :style="{ gridColumn: dayIdx + 2 }"
+                      @click="prepareEventFormForSlot(day.key, hour)"
+                      @dragover.prevent
+                      @drop="moveEventToSlot(day.key, hour)"
                     ></div>
                   </template>
 
@@ -607,17 +814,28 @@ onMounted(() => {
                       v-for="event in calendarEvents"
                       :key="event.id"
                       class="CalendarEvent"
-                      :class="{ 'CalendarEvent--active': selectedEventId === event.id }"
+                      :class="{
+                        'CalendarEvent--active': selectedEventId === event.id,
+                        'CalendarEvent--resizing': isResizingEvent(event),
+                      }"
                       :style="{
                         gridColumn: event.dayIndex + 2,
                         top: `${event.top}px`,
                         height: `${event.height}px`,
                         '--event-accent': event.color ?? '#cfdcff',
                       }"
+                      draggable="true"
                       @click="selectedEventId = event.id ?? null; isEditing = false"
+                      @dragstart="handleEventDragStart(event)"
+                      @dragend="handleEventDragEnd"
                     >
                       <p class="CalendarEvent__title">{{ event.title }}</p>
                       <span>{{ event.startTime }} - {{ event.endTime }}</span>
+                      <div
+                        class="CalendarEvent__resizeHandle"
+                        :class="{ 'CalendarEvent__resizeHandle--active': isResizingEvent(event) }"
+                        @mousedown="startResizeEvent(event, $event)"
+                      ></div>
                     </article>
                   </div>
 
@@ -645,7 +863,7 @@ onMounted(() => {
               </div>
 
               <label class="EventComposer__field">
-                <input v-model="eventForm.title" type="text" placeholder="New event title" />
+                <input ref="createTitleInput" v-model="eventForm.title" type="text" placeholder="New event title" />
               </label>
 
               <label class="EventComposer__field">
