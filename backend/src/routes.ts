@@ -37,6 +37,12 @@ router.get("/", (_req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: List of users
+ *         content:
+ *           application/json:
+ *             example:
+ *               - _id: "682250f706d4d7bb50fc7f91"
+ *                 name: "Sali Bseso"
+ *                 email: "sali@test.com"
  *       500:
  *         description: Server error
  */
@@ -106,6 +112,27 @@ router.use("/auth", authRoutes);
  *     tags: [Events]
  *     summary: Get all events
  *     description: Returns all planner events.
+ *     parameters:
+ *       - in: query
+ *         name: owner
+ *         schema:
+ *           type: string
+ *         description: Filter by owner user id
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Filter by title text
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category text
+ *       - in: query
+ *         name: color
+ *         schema:
+ *           type: string
+ *         description: Filter by event color
  *     responses:
  *       200:
  *         description: List of events
@@ -146,6 +173,18 @@ router.use("/events", eventRoutes);
  *     tags: [Tasks]
  *     summary: Get all kanban tasks
  *     description: Returns all task cards, optionally filtered by owner or status.
+ *     parameters:
+ *       - in: query
+ *         name: owner
+ *         schema:
+ *           type: string
+ *         description: Filter by owner user id
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [todo, in-progress, done]
+ *         description: Filter by task status
  *     responses:
  *       200:
  *         description: List of tasks
@@ -252,6 +291,17 @@ router.use("/tasks", taskRoutes);
  *     tags: [Notes]
  *     summary: Get all notes
  *     description: Returns all personal notes, optionally filtered by owner or search query.
+ *     parameters:
+ *       - in: query
+ *         name: owner
+ *         schema:
+ *           type: string
+ *         description: Filter by owner user id
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Case-insensitive search across title and content
  *     responses:
  *       200:
  *         description: List of notes
@@ -357,6 +407,24 @@ router.use("/notes", noteRoutes);
  *     tags: [Budget]
  *     summary: Get all budget entries
  *     description: Returns budget rows, optionally filtered by owner, month, or type.
+ *     parameters:
+ *       - in: query
+ *         name: owner
+ *         schema:
+ *           type: string
+ *         description: Filter by owner user id
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: string
+ *           example: "2026-05"
+ *         description: Filter by budget month in YYYY-MM format
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [income, fixed, variable, savings]
+ *         description: Filter by budget section type
  *     responses:
  *       200:
  *         description: List of budget entries
